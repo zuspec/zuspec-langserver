@@ -1,0 +1,28 @@
+#*****************************************************************************
+#* ivpm.yaml
+#*****************************************************************************
+package:
+   name: zuspec-langserver
+   version: 0.0.1
+
+   setup-deps:
+   - ninja
+   - cython
+   
+   deps: []
+   
+   dev-deps:
+     - name: liblangserver
+       url: https://github.com/mballance-utils/liblangserver.git
+     - name: zuspec-parser
+       url: https://github.com/zuspec/zuspec-parser.git
+     - name: gtest
+       url: https://github.com/google/googletest/archive/release-1.10.0.tar.gz
+     - name: ninja
+       src: pypi
+     - name: cython
+       src: pypi
+     - name: ivpm
+       src: pypi
+
+  
