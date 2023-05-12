@@ -25,7 +25,9 @@ namespace zsp {
 namespace ls {
 
 
-Server::Server() {
+Server::Server(
+        jrpc::IEventLoop        *loop,
+        lls::IFactory           *factory) : ServerBase(loop, factory) {
 
 }
 

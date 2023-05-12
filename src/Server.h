@@ -19,15 +19,18 @@
  *     Author: 
  */
 #pragma once
+#include "lls/impl/ServerBase.h"
 
 namespace zsp {
 namespace ls {
 
-
-
-class Server {
+class Server;
+using ServerUP=std::unique_ptr<Server>;
+class Server : public virtual lls::ServerBase {
 public:
-    Server();
+    Server(
+        jrpc::IEventLoop        *loop,
+        lls::IFactory           *factory);
 
     virtual ~Server();
 
