@@ -13,6 +13,7 @@ link_directories(
 	${CMAKE_BINARY_DIR}/lls/lib
 	${CMAKE_BINARY_DIR}/lls/lib64
     "${debug_mgr_LIBDIR}"
+    "${zuspec_parser_LIBDIR}"
     )
 
 #********************************************************************
@@ -35,14 +36,18 @@ else()
   list(APPEND LIBLANGSERVER_TESTMAIN_LIBS pthread)	
 endif()
 
-list(APPEND LIBLANGSERVER_TESTMAIN_LIBS langserver debug-mgr)	
+list(APPEND LIBLANGSERVER_TESTMAIN_LIBS zsp-ls langserver)
+list(APPEND LIBLANGSERVER_TESTMAIN_LIBS zsp-parser debug-mgr)	
 
 target_include_directories(test-lls PRIVATE
 	${CMAKE_BINARY_DIR}/gtest/include
 #	${PACKAGES_DIR}/googletest/googletest/include
+	${CMAKE_SOURCE_DIR}/src
 	${CMAKE_SOURCE_DIR}/src/include
     "${PACKAGES_DIR}/libjson-rpc/src/include"
+    "${PACKAGES_DIR}/liblangserver/src/include"
     "${debug_mgr_INCDIR}"
+    "${zuspec_parser_INCDIR}"
     )
 target_link_libraries(test-lls ${LIBLANGSERVER_TESTMAIN_LIBS})
 

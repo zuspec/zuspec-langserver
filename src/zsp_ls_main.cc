@@ -1,9 +1,31 @@
+/**
+ * zsp_ls_main.cc
+ *
+ * Copyright 2023 Matthew Ballance and Contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may 
+ * not use this file except in compliance with the License.  
+ * You may obtain a copy of the License at:
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an "AS IS" BASIS, 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+ * See the License for the specific language governing permissions and 
+ * limitations under the License.
+ *
+ * Created on:
+ *     Author: 
+ */
 #include <string>
 #include <stdio.h>
 #include "dmgr/FactoryExt.h"
 #include "dmgr/impl/DebugMacros.h"
 #include "jrpc/FactoryExt.h"
 #include "lls/FactoryExt.h"
+#include "zsp/parser/FactoryExt.h"
+#include "zsp/ast/IFactory.h"
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -13,6 +35,8 @@
 static dmgr::IDebug             *m_dbg = 0;
 
 using namespace zsp::ls;
+
+extern "C" zsp::ast::IFactory *ast_getFactory();
 
 int main(int argc, char **argv) {
     dmgr::IFactory *dmgr_f = dmgr_getFactory();
@@ -38,26 +62,16 @@ int main(int argc, char **argv) {
 
     DEBUG("Hello");
 
-/*
-    const char *IPC_HOOK = getenv("VSCODE_IPC_HOOK_CLI");
-
-    if (!IPC_HOOK || !IPC_HOOK[0]) {
-        return 1;
-    }
-
-    int32_t client_fd = jrpc_f->mkSocketClientConnection(IPC_HOOK);
-
-    if (client_fd == -1) {
-        return 1;
-    }
- */
-
     jrpc::IEventLoopUP loop(jrpc_f->mkEventLoop());
     jrpc::IMessageTransportUP transport(jrpc_f->mkStdioMessageTransport(
         loop.get()
     ));
 
-    ServerUP server(new Server(loop.get(), lls_f));
+    zsp::ast::IFactory *zsp_ast_f = ast_getFactory();
+    zsp::parser::IFactory *zsp_parser_f = zsp_parser_getFactory();
+    zsp_parser_f->init(dmgr, zsp_ast_f);
+
+    ServerUP server(new Server(loop.get(), lls_f, zsp_parser_f));
     lls::IServerMessageDispatcherUP dispatcher(lls_f->mkNBServerMessageDispatcher(
         transport.get(),
         server.get()
@@ -66,26 +80,5 @@ int main(int argc, char **argv) {
     while (loop->process_one_event(-1)) {
         ;
     }
-
-/*
-    const char *IPC_HOOK_EQ = strchr(IPC_HOOK, '=');
-    struct sockaddr_un server_sockaddr;
-    struct sockaddr_un client_sockaddr;
-
-    dmgr->flush();
-
-    memset(&server_sockaddr, 0, sizeof(struct sockaddr_un));
-    memset(&client_sockaddr, 0, sizeof(struct sockaddr_un));
-
-    int client_sock = socket(AF_UNIX, SOCK_STREAM, 0);
-
-    client_sockaddr.sun_family = AF_UNIX;
-    strcpy(client_sockaddr.sun_path, IPC_HOOK);
-    int len = sizeof(client_sockaddr);
-
-    int rc = connect(client_sock, (struct sockaddr *)&client_sockaddr, len);
-
-    DEBUG("connect rc=%d", rc);
- */
 
 }

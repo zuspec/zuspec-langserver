@@ -20,16 +20,44 @@
  */
 #pragma once
 #include "gtest/gtest.h"
+#include "dmgr/IDebugMgr.h"
+#include "jrpc/IFactory.h"
+#include "lls/IFactory.h"
+#include "Server.h"
 
 namespace zsp {
 namespace ls {
 
-
 class TestBase : public ::testing::Test {
+public:
+
+    struct ClientServerData;
+    using ClientServerDataUP=std::unique_ptr<ClientServerData>;
+    struct ClientServerData {
+        ServerUP                            server;
+        lls::IServerMessageDispatcherUP     server_dispatch;
+        lls::IClientMessageDispatcherUP     client;
+        jrpc::IEventLoopUP                  loop;
+
+        lls::IClientMessageDispatcherUP     client_dispatch;
+    };
+
 public:
     TestBase();
 
     virtual ~TestBase();
+
+    virtual void SetUp() override;
+
+    ClientServerData mkClientServer();
+
+protected:
+    void enableDebug(bool en);
+
+protected:
+    dmgr::IDebugMgr     *m_dmgr;
+    jrpc::IFactory      *m_jrpc_factory;
+    lls::IFactory       *m_lls_factory;
 
 };
 

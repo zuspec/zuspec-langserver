@@ -1,7 +1,7 @@
 /**
- * Server.h
+ * TestInitialize.h
  *
- * Copyright 2022 Matthew Ballance and Contributors
+ * Copyright 2023 Matthew Ballance and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may 
  * not use this file except in compliance with the License.  
@@ -19,27 +19,18 @@
  *     Author: 
  */
 #pragma once
-#include "lls/impl/ServerBase.h"
-#include "zsp/parser/IFactory.h"
+#include "TestBase.h"
 
 namespace zsp {
 namespace ls {
 
-class Server;
-using ServerUP=std::unique_ptr<Server>;
-class Server : public virtual lls::ServerBase {
+
+
+class TestInitialize : public TestBase {
 public:
-    Server(
-        jrpc::IEventLoop        *loop,
-        lls::IFactory           *lls_factory,
-        zsp::parser::IFactory   *parser_factory);
+    TestInitialize();
 
-    virtual ~Server();
-
-	virtual lls::IInitializeResultUP initialize(lls::IInitializeParamsUP &params) override;
-
-protected:
-    zsp::parser::IFactory       *m_parser_factory;
+    virtual ~TestInitialize();
 
 };
 
