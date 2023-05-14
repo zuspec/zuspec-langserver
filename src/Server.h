@@ -36,9 +36,12 @@ public:
 
     virtual ~Server();
 
+    virtual lls::IHoverUP hover(lls::IHoverParamsUP &params) override;
+
 	virtual lls::IInitializeResultUP initialize(lls::IInitializeParamsUP &params) override;
 
 protected:
+    static dmgr::IDebug         *m_dbg;
     zsp::parser::IFactory       *m_parser_factory;
 
 };

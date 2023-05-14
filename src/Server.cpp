@@ -18,6 +18,7 @@
  * Created on:
  *     Author:
  */
+#include "dmgr/impl/DebugMacros.h"
 #include "Server.h"
 
 
@@ -30,11 +31,20 @@ Server::Server(
         lls::IFactory           *lls_factory,
         zsp::parser::IFactory   *parser_factory) : 
             ServerBase(loop, lls_factory), m_parser_factory(parser_factory) {
-
+    DEBUG_INIT("Server", lls_factory->getDebugMgr());
 }
 
 Server::~Server() {
 
+}
+
+lls::IHoverUP Server::hover(lls::IHoverParamsUP &params) {
+    DEBUG_ENTER("hover");
+    lls::IContentUP content(m_factory->mkContentMarkedString("", "Hello World!"));
+    lls::IRangeUP range;
+    DEBUG_LEAVE("hover");
+
+    return lls::IHoverUP(m_factory->mkHover(content, range));
 }
 
 lls::IInitializeResultUP Server::initialize(lls::IInitializeParamsUP &params) {
@@ -47,12 +57,16 @@ lls::IInitializeResultUP Server::initialize(lls::IInitializeParamsUP &params) {
     );
     lls::IServerInfoUP serverInfo;
 
+    capabilites->setHoverProvider(true);
+
     lls::IInitializeResultUP ret(m_factory->mkInitializeResult(
         capabilites,
         serverInfo));
 
     return ret;
 }
+
+dmgr::IDebug *Server::m_dbg = 0;
 
 }
 }
