@@ -19,6 +19,7 @@
  *     Author: 
  */
 #pragma once
+#include <map>
 #include "gtest/gtest.h"
 #include "dmgr/IDebugMgr.h"
 #include "jrpc/IFactory.h"
@@ -49,12 +50,29 @@ public:
 
     virtual void SetUp() override;
 
+    virtual void TearDown() override;
+
     ClientServerData mkClientServer();
 
 protected:
     void enableDebug(bool en);
 
+    bool mkdir(const std::string &path);
+
+    bool rmdir(const std::string &path);
+
+//    int mkdirs(const std::string &path);
+
+    bool isdir(const std::string &path);
+
+    std::string basename(const std::string &path);
+
+    std::string dirname(const std::string &path);
+
+    bool createTree(const std::map<std::string,std::string> &files);
+
 protected:
+    std::string         m_testdir;
     dmgr::IDebugMgr     *m_dmgr;
     jrpc::IFactory      *m_jrpc_factory;
     lls::IFactory       *m_lls_factory;

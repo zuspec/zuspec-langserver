@@ -37,6 +37,11 @@ TEST_F(TestInitialize, smoke) {
     enableDebug(true);
     ClientServerData cs_data = mkClientServer();
 
+    createTree({
+        {"file.pss", "Hello World"},
+        {"foo/bar/file.pss", "Baz"}
+    });
+
     lls::IInitializeParamsUP init_p(m_lls_factory->mkInitializeParams(
         1234,
         0,
