@@ -20,6 +20,8 @@
  */
 #include "dmgr/impl/DebugMacros.h"
 #include "Server.h"
+#include "TaskUpdateSourceFileData.h"
+#include "TaskFindSourceFiles.h"
 
 
 namespace zsp {
@@ -30,8 +32,12 @@ Server::Server(
         jrpc::IEventLoop        *loop,
         lls::IFactory           *lls_factory,
         zsp::parser::IFactory   *parser_factory) : 
-            ServerBase(loop, lls_factory), m_parser_factory(parser_factory) {
+            ServerBase(loop, lls_factory), m_parser_factory(parser_factory),
+            m_source_files(new SourceFileCollection()),
+            m_queue(lls_factory->getFactory()->mkTaskQueue(loop)) {
     DEBUG_INIT("Server", lls_factory->getDebugMgr());
+
+    m_ast_builder = zsp::parser::IAstBuilderUP(m_parser_factory->mkAstBuilder(0));
 }
 
 Server::~Server() {
@@ -59,11 +65,91 @@ lls::IInitializeResultUP Server::initialize(lls::IInitializeParamsUP &params) {
 
     capabilites->setHoverProvider(true);
 
+    // Setup a job to find .pss files
+    std::vector<std::string> roots;
+    DEBUG("Root path: %s", params->getRootPath().c_str());
+
+    roots.push_back(params->getRootPath());
+    for (std::vector<std::string>::const_iterator
+        it=params->getWorkspaceFolders().begin();
+        it!=params->getWorkspaceFolders().end(); it++) {
+        DEBUG("Workspace Folder: %s", it->c_str());
+        roots.push_back(*it);
+    }
+
+    jrpc::ITaskUP task(new TaskFindSourceFiles(m_factory, m_source_files.get(), roots));
+    m_queue->addTask(task);
+
     lls::IInitializeResultUP ret(m_factory->mkInitializeResult(
         capabilites,
         serverInfo));
 
     return ret;
+}
+
+void Server::didOpen(lls::IDidOpenTextDocumentParamsUP &params) {
+    DEBUG_ENTER("didOpen");
+    SourceFileData *src;
+
+    if (m_source_files->hasFile(params->getTextDocument()->getUri())) {
+        src = m_source_files->getFile(params->getTextDocument()->getUri());
+    } else {
+        // This file wasn't found during discovery, so we add it to the
+        // collection that we're managing now.
+        // TODO: Should we mark it as somehow 'unmanaged'?
+        src = new SourceFileData(
+            params->getTextDocument()->getUri(),
+            -1);
+    }
+    src->setLiveContent(params->getTextDocument()->getText());
+
+    // Now, queue this file for parsing
+    jrpc::ITaskUP task(new TaskUpdateSourceFileData(
+        m_factory,
+        m_ast_builder.get(), 
+        src));
+    m_queue->addTask(task);
+    DEBUG_LEAVE("didOpen");
+}
+
+void Server::didChange(lls::IDidChangeTextDocumentParamsUP &params) {
+    SourceFileData *src;
+
+    if (!m_source_files->hasFile(params->getTextDocument()->getUri())) {
+        // ERROR
+        return;
+    }
+
+    src = m_source_files->getFile(params->getTextDocument()->getUri());
+    // TODO: apply changes
+//    src->setLiveContent(params->getChanges()->
+
+    // Now, queue this file for parsing
+    jrpc::ITaskUP task(new TaskUpdateSourceFileData(
+        m_factory,
+        m_ast_builder.get(), 
+        src));
+    m_queue->addTask(task);
+}
+
+void Server::didClose(lls::IDidCloseTextDocumentParamsUP &params) {
+    SourceFileData *src;
+
+    if (!m_source_files->hasFile(params->getTextDocument()->getUri())) {
+        // ERROR
+        return;
+    }
+
+    src = m_source_files->getFile(params->getTextDocument()->getUri());
+    // Revert to being a closed file
+    src->setLiveContent("");
+
+    // Now, queue this file for parsing
+    jrpc::ITaskUP task(new TaskUpdateSourceFileData(
+        m_factory,
+        m_ast_builder.get(), 
+        src));
+    m_queue->addTask(task);
 }
 
 dmgr::IDebug *Server::m_dbg = 0;

@@ -19,8 +19,10 @@
  *     Author: 
  */
 #pragma once
+#include "jrpc/ITaskQueue.h"
 #include "lls/impl/ServerBase.h"
 #include "zsp/parser/IFactory.h"
+#include "SourceFileCollection.h"
 
 namespace zsp {
 namespace ls {
@@ -40,9 +42,18 @@ public:
 
 	virtual lls::IInitializeResultUP initialize(lls::IInitializeParamsUP &params) override;
 
+    virtual void didOpen(lls::IDidOpenTextDocumentParamsUP &params) override;
+
+    virtual void didChange(lls::IDidChangeTextDocumentParamsUP &params) override;
+
+    virtual void didClose(lls::IDidCloseTextDocumentParamsUP &params) override;
+
 protected:
     static dmgr::IDebug         *m_dbg;
+    zsp::parser::IAstBuilderUP  m_ast_builder;
     zsp::parser::IFactory       *m_parser_factory;
+    SourceFileCollectionUP      m_source_files;
+    jrpc::ITaskQueueUP          m_queue;
 
 };
 
