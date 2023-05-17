@@ -19,6 +19,7 @@
  *     Author:
  */
 #include "dmgr/impl/DebugMacros.h"
+#include "lls/IDocumentSymbolResponse.h"
 #include "Server.h"
 #include "TaskUpdateSourceFileData.h"
 #include "TaskFindSourceFiles.h"
@@ -64,6 +65,7 @@ lls::IInitializeResultUP Server::initialize(lls::IInitializeParamsUP &params) {
     lls::IServerInfoUP serverInfo;
 
     capabilites->setHoverProvider(true);
+    capabilites->setDocumentSymbolProvider(true);
 
     // Setup a job to find .pss files
     std::vector<std::string> roots;
@@ -92,20 +94,27 @@ void Server::didOpen(lls::IDidOpenTextDocumentParamsUP &params) {
     SourceFileData *src;
 
     if (m_source_files->hasFile(params->getTextDocument()->getUri())) {
+        DEBUG("File already found");
         src = m_source_files->getFile(params->getTextDocument()->getUri());
     } else {
         // This file wasn't found during discovery, so we add it to the
         // collection that we're managing now.
         // TODO: Should we mark it as somehow 'unmanaged'?
+        DEBUG("File not found already");
         src = new SourceFileData(
             params->getTextDocument()->getUri(),
             -1);
+        SourceFileDataUP src_up(src);
+        m_source_files->addFile(src_up);
     }
+    DEBUG("Set Live Content: %d", params->getTextDocument()->getText().size());
     src->setLiveContent(params->getTextDocument()->getText());
+    DEBUG("  Set Live Content: %d", src->getLiveContent().size());
 
     // Now, queue this file for parsing
     jrpc::ITaskUP task(new TaskUpdateSourceFileData(
         m_factory,
+        m_client,
         m_ast_builder.get(), 
         src));
     m_queue->addTask(task);
@@ -117,22 +126,32 @@ void Server::didChange(lls::IDidChangeTextDocumentParamsUP &params) {
 
     if (!m_source_files->hasFile(params->getTextDocument()->getUri())) {
         // ERROR
+        DEBUG("Error: attempting to change an unopened file");
         return;
     }
 
     src = m_source_files->getFile(params->getTextDocument()->getUri());
-    // TODO: apply changes
-//    src->setLiveContent(params->getChanges()->
+
+    for (std::vector<lls::ITextDocumentContentChangeEventUP>::const_iterator
+        it=params->getChanges().begin();
+        it!=params->getChanges().end(); it++) {
+        DEBUG("Change: hasRange=%p text=%s",
+            (*it)->getRange(),
+            (*it)->getText().c_str());
+    }
+    src->setLiveContent(params->getChanges().at(0)->getText());
 
     // Now, queue this file for parsing
     jrpc::ITaskUP task(new TaskUpdateSourceFileData(
         m_factory,
+        m_client,
         m_ast_builder.get(), 
         src));
     m_queue->addTask(task);
 }
 
 void Server::didClose(lls::IDidCloseTextDocumentParamsUP &params) {
+    DEBUG_ENTER("didClose");
     SourceFileData *src;
 
     if (!m_source_files->hasFile(params->getTextDocument()->getUri())) {
@@ -147,9 +166,39 @@ void Server::didClose(lls::IDidCloseTextDocumentParamsUP &params) {
     // Now, queue this file for parsing
     jrpc::ITaskUP task(new TaskUpdateSourceFileData(
         m_factory,
+        m_client,
         m_ast_builder.get(), 
         src));
     m_queue->addTask(task);
+    DEBUG_LEAVE("didClose");
+}
+
+lls::IDocumentSymbolResponseUP Server::documentSymbols(
+            lls::IDocumentSymbolParamsUP &params) {
+    DEBUG_ENTER("documentSymbols");
+
+    std::vector<lls::IDocumentSymbolUP> symbols;
+
+    lls::IPositionUP start(m_factory->mkPosition(1, 1));
+    lls::IPositionUP end(m_factory->mkPosition(1, 10));
+    lls::IRangeUP range(m_factory->mkRange(start, end));
+    start = m_factory->mkPosition(1, 1);
+    end = m_factory->mkPosition(1, 10);
+    lls::IRangeUP selectionRange(m_factory->mkRange(start, end));
+    symbols.push_back(std::move(m_factory->mkDocumentSymbol(
+        "abc",
+        lls::SymbolKind::Class,
+        range,
+        selectionRange
+    )));
+
+    lls::IDocumentSymbolResponseUP response(m_factory->mkDocumentSymbolResponse(
+        symbols
+    ));
+
+    DEBUG_LEAVE("documentSymbols");
+
+    return response;
 }
 
 dmgr::IDebug *Server::m_dbg = 0;

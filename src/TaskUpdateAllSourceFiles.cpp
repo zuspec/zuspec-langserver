@@ -1,5 +1,5 @@
 /*
- * SourceFileData.cpp
+ * TaskUpdateAllSourceFiles.cpp
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -18,21 +18,28 @@
  * Created on:
  *     Author:
  */
-#include "SourceFileData.h"
+#include "TaskUpdateAllSourceFiles.h"
+
 
 namespace zsp {
 namespace ls {
 
 
-SourceFileData::SourceFileData(
-    const std::string       &uri,
-    int64_t                 timestamp) :
-        m_uri(uri), m_id(-1), m_timestamp(timestamp),
-        m_haveMarkers(false) {
+TaskUpdateAllSourceFiles::TaskUpdateAllSourceFiles(
+    lls::IFactory               *factory,
+    lls::IClient                *client,
+    zsp::parser::IAstBuilder    *ast_builder,
+    SourceFileCollection        *src_files) :
+        m_factory(factory), m_client(client),
+        m_ast_builder(ast_builder), m_src_files(src_files) {
 
 }
 
-SourceFileData::~SourceFileData() {
+TaskUpdateAllSourceFiles::~TaskUpdateAllSourceFiles() {
+
+}
+
+bool TaskUpdateAllSourceFiles::run(jrpc::ITaskQueue *queue) {
 
 }
 

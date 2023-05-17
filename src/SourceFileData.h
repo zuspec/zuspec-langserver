@@ -86,6 +86,14 @@ public:
         m_liveAst = std::move(ast);
     }
 
+    virtual bool haveMarkers() const {
+        return m_haveMarkers;
+    }
+
+    virtual void setHaveMarkers(bool h) {
+        m_haveMarkers = h;
+    }
+
 private:
     std::string                 m_uri;
     int32_t                     m_id;
@@ -94,6 +102,7 @@ private:
     std::string                 m_liveContent;
     zsp::ast::IGlobalScopeUP    m_staticAst;
     zsp::ast::IGlobalScopeUP    m_liveAst;
+    bool                        m_haveMarkers;
 
 };
 

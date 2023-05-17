@@ -48,6 +48,9 @@ public:
 
     virtual void didClose(lls::IDidCloseTextDocumentParamsUP &params) override;
 
+    virtual lls::IDocumentSymbolResponseUP documentSymbols(
+            lls::IDocumentSymbolParamsUP &params) override;
+
 protected:
     static dmgr::IDebug         *m_dbg;
     zsp::parser::IAstBuilderUP  m_ast_builder;

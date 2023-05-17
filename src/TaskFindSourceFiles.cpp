@@ -21,6 +21,7 @@
 #include "dmgr/impl/DebugMacros.h"
 #include "TaskFindSourceFiles.h"
 #include "SourceFileFinder.h"
+#include "TaskUpdateSourceFileData.h"
 
 
 namespace zsp {

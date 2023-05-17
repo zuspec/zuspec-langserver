@@ -1,5 +1,5 @@
-/*
- * SourceFileData.cpp
+/**
+ * TaskBuildDocumentSymbols.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -16,25 +16,37 @@
  * limitations under the License.
  *
  * Created on:
- *     Author:
+ *     Author: 
  */
-#include "SourceFileData.h"
+#pragma once
+#include "lls/IFactory.h"
+#include "zsp/ast/impl/VisitorBase.h"
 
 namespace zsp {
 namespace ls {
 
 
-SourceFileData::SourceFileData(
-    const std::string       &uri,
-    int64_t                 timestamp) :
-        m_uri(uri), m_id(-1), m_timestamp(timestamp),
-        m_haveMarkers(false) {
+
+class TaskBuildDocumentSymbols : 
+    public virtual zsp::ast::VisitorBase {
+public:
+    TaskBuildDocumentSymbols(
+        lls::IFactory           *factory
+    );
+
+    virtual ~TaskBuildDocumentSymbols();
+
+    lls::IDocumentSymbolResponseUP build(
+        zsp::ast::IGlobalScope      *scope
+    );
+
+private:
+    std::vector<lls::IDocumentSymbolUP>     m_sym_s;
+    lls::IFactory                           *m_factory;
+
+};
 
 }
-
-SourceFileData::~SourceFileData() {
-
 }
 
-}
-}
+

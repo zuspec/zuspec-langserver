@@ -1,5 +1,5 @@
 /**
- * TaskUpdateSourceFileData.h
+ * TaskUpdateAllSourceFiles.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -20,44 +20,34 @@
  */
 #pragma once
 #include "jrpc/ITask.h"
-#include "lls/IClient.h"
 #include "lls/IFactory.h"
-#include "zsp/ast/IFactory.h"
 #include "zsp/parser/IAstBuilder.h"
-#include "zsp/parser/IMarkerListener.h"
-#include "SourceFileData.h"
+#include "SourceFileCollection.h"
 
 namespace zsp {
 namespace ls {
 
 
 
-class TaskUpdateSourceFileData :
-    public virtual zsp::parser::IMarkerListener,
-    public virtual jrpc::ITask {
+class TaskUpdateAllSourceFiles : public virtual jrpc::ITask {
 public:
-    TaskUpdateSourceFileData(
+    TaskUpdateAllSourceFiles(
         lls::IFactory               *factory,
         lls::IClient                *client,
         zsp::parser::IAstBuilder    *ast_builder,
-        SourceFileData              *file);
+        SourceFileCollection        *src_files
+    );
 
-    virtual ~TaskUpdateSourceFileData();
+    virtual ~TaskUpdateAllSourceFiles();
 
     virtual bool run(jrpc::ITaskQueue *queue) override;
 
-	virtual void marker(const zsp::parser::IMarker *m) override;
-
-	virtual bool hasSeverity(zsp::parser::MarkerSeverityE s) override;
-
 private:
-    static dmgr::IDebug                 *m_dbg;
-    lls::IFactory                       *m_factory;
-    lls::IClient                        *m_client;
-    zsp::parser::IAstBuilder            *m_ast_builder;
-    SourceFileData                      *m_file;
-    int                                 m_has[(int)zsp::parser::MarkerSeverityE::NumLevels];
-    std::vector<lls::IDiagnosticUP>     m_diagnostics;
+    lls::IFactory                   *m_factory;
+    lls::IClient                    *m_client;
+    zsp::parser::IAstBuilder        *m_ast_builder;
+    SourceFileCollection            *m_src_files;
+
 };
 
 }

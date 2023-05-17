@@ -1,5 +1,5 @@
 /*
- * SourceFileData.cpp
+ * TaskBuildDocumentSymbols.cpp
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -18,22 +18,37 @@
  * Created on:
  *     Author:
  */
-#include "SourceFileData.h"
+#include "TaskBuildDocumentSymbols.h"
+
 
 namespace zsp {
 namespace ls {
 
 
-SourceFileData::SourceFileData(
-    const std::string       &uri,
-    int64_t                 timestamp) :
-        m_uri(uri), m_id(-1), m_timestamp(timestamp),
-        m_haveMarkers(false) {
+TaskBuildDocumentSymbols::TaskBuildDocumentSymbols(
+    lls::IFactory           *factory) : m_factory(factory) {
 
 }
 
-SourceFileData::~SourceFileData() {
+TaskBuildDocumentSymbols::~TaskBuildDocumentSymbols() {
 
+}
+
+lls::IDocumentSymbolResponseUP TaskBuildDocumentSymbols::build(
+        zsp::ast::IGlobalScope      *scope) {
+    lls::IRangeUP range, selectionRange;
+    m_sym_s.push_back(std::move(m_factory->mkDocumentSymbol(
+        "",
+        lls::SymbolKind::Null,
+        range,
+        selectionRange
+    )));
+
+    scope->accept(m_this);
+
+    return m_factory->mkDocumentSymbolResponse(
+        m_sym_s.back()->getChildren()
+    );
 }
 
 }
