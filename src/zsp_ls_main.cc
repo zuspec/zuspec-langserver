@@ -73,6 +73,7 @@ int main(int argc, char **argv) {
 
     ServerUP server(new Server(loop.get(), lls_f, zsp_parser_f));
     lls::IServerMessageDispatcherUP dispatcher(lls_f->mkNBServerMessageDispatcher(
+        server->getQueue(),
         transport.get(),
         server.get()
     ));

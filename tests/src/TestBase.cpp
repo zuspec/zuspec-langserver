@@ -252,6 +252,7 @@ TestBase::ClientServerData TestBase::mkClientServer() {
 
     ret.client = lls::IClientMessageDispatcherUP(
         m_lls_factory->mkClientMessageDispatcher(
+            0,
             m_jrpc_factory->mkNBSocketMessageTransport(
                 ret.loop.get(),
                 client_fd),
@@ -266,6 +267,7 @@ TestBase::ClientServerData TestBase::mkClientServer() {
 
     ret.server_dispatch = lls::IServerMessageDispatcherUP(
         m_lls_factory->mkNBServerMessageDispatcher(
+            0,
             m_jrpc_factory->mkNBSocketMessageTransport(
                 ret.loop.get(),
                 server_fd

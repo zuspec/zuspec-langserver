@@ -38,6 +38,8 @@ public:
 
     virtual ~Server();
 
+    virtual jrpc::ITaskQueue *getQueue() const { return m_queue.get(); }
+
     virtual lls::IHoverUP hover(lls::IHoverParamsUP &params) override;
 
 	virtual lls::IInitializeResultUP initialize(lls::IInitializeParamsUP &params) override;

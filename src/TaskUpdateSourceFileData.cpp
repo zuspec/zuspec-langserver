@@ -68,7 +68,6 @@ bool TaskUpdateSourceFileData::run(jrpc::ITaskQueue *queue) {
         // We're parsing content off disk
         // TODO:
         std::string path = m_file->getUri().substr(7);
-        fprintf(stderr, "Parse file: %s\n", path.c_str());
         fstr.open(path.c_str(), std::ios::in);
         is = &fstr;
     }
@@ -82,6 +81,14 @@ bool TaskUpdateSourceFileData::run(jrpc::ITaskQueue *queue) {
 
     if (is == &fstr) {
         fstr.close();
+    }
+    
+    if (m_file->getLiveContent().size()) {
+        if (m_diagnostics.size() == 0) {
+            m_file->setLiveAst(global);
+        }
+    } else {
+        m_file->setStaticAst(global);
     }
 
     // We need to publish diagnostics if we have new ones (from the parse)

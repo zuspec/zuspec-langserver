@@ -40,8 +40,31 @@ public:
         zsp::ast::IGlobalScope      *scope
     );
 
+    virtual void visitAction(zsp::ast::IAction *i) override;
+
+    virtual void visitComponent(zsp::ast::IComponent *i) override;
+
+    virtual void visitField(zsp::ast::IField *i) override;
+
+    virtual void visitFunctionDefinition(zsp::ast::IFunctionDefinition *i) override;
+
+    virtual void visitPackageScope(zsp::ast::IPackageScope *i) override;
+
+    virtual void visitStruct(zsp::ast::IStruct *i) override;
+
+protected:
+
+    std::pair<lls::IRangeUP, lls::IRangeUP> getScopeRange(zsp::ast::INamedScope *s);
+
+    std::pair<lls::IRangeUP, lls::IRangeUP> getScopeRange(zsp::ast::IPackageScope *s);
+
+    std::pair<lls::IRangeUP, lls::IRangeUP> getItemRange(zsp::ast::INamedScopeChild *s);
+
+    std::pair<lls::IRangeUP, lls::IRangeUP> getItemRange(zsp::ast::IFunctionDefinition *s);
+
 private:
-    std::vector<lls::IDocumentSymbolUP>     m_sym_s;
+    static dmgr::IDebug                     *m_dbg;
+    std::vector<lls::IDocumentSymbol *>     m_sym_s;
     lls::IFactory                           *m_factory;
 
 };

@@ -29,18 +29,22 @@ target_include_directories(zsp-ls PRIVATE
     "${debug_mgr_INCDIR}"
     "${zuspec_parser_INCDIR}"
     )
-target_link_libraries(zsp-ls
-    json-rpc
-    langserver
-    zsp-parser
-    debug-mgr
-    ast)
+#target_link_libraries(zsp-ls
+#    json-rpc
+#    langserver
+#    zsp-parser
+#    debug-mgr
+#    ast)
 
 add_executable(zsp-langserver "zsp_ls_main.cc")
 add_dependencies(zsp-langserver zsp-ls)
 target_link_libraries(zsp-langserver 
     zsp-ls
-    debug-mgr)
+    json-rpc
+    langserver
+    zsp-parser
+    debug-mgr
+    ast)
 target_include_directories(zsp-langserver PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/include

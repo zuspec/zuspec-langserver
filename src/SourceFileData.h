@@ -23,6 +23,7 @@
 #include <memory>
 #include <string>
 #include "zsp/ast/IGlobalScope.h"
+#include "zsp/ast/ISymbolScope.h"
 
 namespace zsp {
 namespace ls {
@@ -86,6 +87,14 @@ public:
         m_liveAst = std::move(ast);
     }
 
+    virtual zsp::ast::ISymbolScope *getFileSymtab() {
+        return m_fileSymtab.get();
+    }
+
+    virtual void setFileSymtab(zsp::ast::ISymbolScopeUP &symt) {
+        m_fileSymtab = std::move(symt);
+    }
+
     virtual bool haveMarkers() const {
         return m_haveMarkers;
     }
@@ -102,6 +111,7 @@ private:
     std::string                 m_liveContent;
     zsp::ast::IGlobalScopeUP    m_staticAst;
     zsp::ast::IGlobalScopeUP    m_liveAst;
+    zsp::ast::ISymbolScopeUP    m_fileSymtab;
     bool                        m_haveMarkers;
 
 };

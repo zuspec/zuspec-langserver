@@ -24,5 +24,7 @@ package:
        src: pypi
      - name: ivpm
        src: pypi
+     - name: pytest
+       src: pypi
 
   

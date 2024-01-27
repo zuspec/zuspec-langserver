@@ -21,6 +21,7 @@
 #include "dmgr/impl/DebugMacros.h"
 #include "lls/IDocumentSymbolResponse.h"
 #include "Server.h"
+#include "TaskBuildDocumentSymbols.h"
 #include "TaskUpdateSourceFileData.h"
 #include "TaskFindSourceFiles.h"
 
@@ -117,7 +118,7 @@ void Server::didOpen(lls::IDidOpenTextDocumentParamsUP &params) {
         m_client,
         m_ast_builder.get(), 
         src));
-    m_queue->addTask(task);
+    m_queue->addTaskPreempt(task);
     DEBUG_LEAVE("didOpen");
 }
 
@@ -176,25 +177,24 @@ void Server::didClose(lls::IDidCloseTextDocumentParamsUP &params) {
 lls::IDocumentSymbolResponseUP Server::documentSymbols(
             lls::IDocumentSymbolParamsUP &params) {
     DEBUG_ENTER("documentSymbols");
+    SourceFileData *src = 0;
+    zsp::ast::IGlobalScope *global = 0;
 
-    std::vector<lls::IDocumentSymbolUP> symbols;
+    lls::IDocumentSymbolResponseUP response;
+    if (m_source_files->hasFile(params->getTextDocument()->getUri())) {
+        src = m_source_files->getFile(params->getTextDocument()->getUri());
+        global = (src->getLiveAst())?src->getLiveAst():src->getStaticAst();
+    }
 
-    lls::IPositionUP start(m_factory->mkPosition(1, 1));
-    lls::IPositionUP end(m_factory->mkPosition(1, 10));
-    lls::IRangeUP range(m_factory->mkRange(start, end));
-    start = m_factory->mkPosition(1, 1);
-    end = m_factory->mkPosition(1, 10);
-    lls::IRangeUP selectionRange(m_factory->mkRange(start, end));
-    symbols.push_back(std::move(m_factory->mkDocumentSymbol(
-        "abc",
-        lls::SymbolKind::Class,
-        range,
-        selectionRange
-    )));
-
-    lls::IDocumentSymbolResponseUP response(m_factory->mkDocumentSymbolResponse(
-        symbols
-    ));
+    if (!global) {
+        // ERROR -- Create a null response to keep everything moving
+        std::vector<lls::IDocumentSymbolUP> symbols;
+        response = m_factory->mkDocumentSymbolResponse(symbols);
+        DEBUG("Global is null");
+    } else {
+        TaskBuildDocumentSymbols builder(m_factory);
+        response = builder.build(global);
+    }
 
     DEBUG_LEAVE("documentSymbols");
 
