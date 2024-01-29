@@ -34,12 +34,13 @@ Server::Server(
         jrpc::IEventLoop        *loop,
         lls::IFactory           *lls_factory,
         zsp::parser::IFactory   *parser_factory) : 
-            ServerBase(loop, lls_factory), m_parser_factory(parser_factory),
-            m_source_files(new SourceFileCollection()),
-            m_queue(lls_factory->getFactory()->mkTaskQueue(loop)) {
-    DEBUG_INIT("Server", lls_factory->getDebugMgr());
-
-    m_ast_builder = zsp::parser::IAstBuilderUP(m_parser_factory->mkAstBuilder(0));
+            ServerBase(loop, lls_factory), 
+            m_queue(lls_factory->getFactory()->mkTaskQueue(loop)),
+            m_ctxt(new Context(
+                lls_factory->getDebugMgr(),
+                m_queue.get(),
+                lls_factory, m_client, parser_factory)) {
+    DEBUG_INIT("zsp::ls::Server", m_ctxt->getDebugMgr());
 }
 
 Server::~Server() {
@@ -114,9 +115,8 @@ void Server::didOpen(lls::IDidOpenTextDocumentParamsUP &params) {
 
     // Now, queue this file for parsing
     jrpc::ITaskUP task(new TaskUpdateSourceFileData(
-        m_factory,
-        m_client,
-        m_ast_builder.get(), 
+        m_ctxt.get(),
+        m_source_files.get(),
         src));
     m_queue->addTaskPreempt(task);
     DEBUG_LEAVE("didOpen");
@@ -142,11 +142,15 @@ void Server::didChange(lls::IDidChangeTextDocumentParamsUP &params) {
     }
     src->setLiveContent(params->getChanges().at(0)->getText());
 
+    // TODO: file-content changing should prompt an
+    // update of the linked view for this file
+    // Link updates depend on both the 'live' content being
+    // parsed *and* any updates of non-live content completing
+
     // Now, queue this file for parsing
     jrpc::ITaskUP task(new TaskUpdateSourceFileData(
-        m_factory,
-        m_client,
-        m_ast_builder.get(), 
+        m_ctxt.get(),
+        m_source_files.get(),
         src));
     m_queue->addTask(task);
 }
@@ -166,9 +170,8 @@ void Server::didClose(lls::IDidCloseTextDocumentParamsUP &params) {
 
     // Now, queue this file for parsing
     jrpc::ITaskUP task(new TaskUpdateSourceFileData(
-        m_factory,
-        m_client,
-        m_ast_builder.get(), 
+        m_ctxt.get(),
+        m_source_files.get(),
         src));
     m_queue->addTask(task);
     DEBUG_LEAVE("didClose");
@@ -176,9 +179,15 @@ void Server::didClose(lls::IDidCloseTextDocumentParamsUP &params) {
 
 lls::IDocumentSymbolResponseUP Server::documentSymbols(
             lls::IDocumentSymbolParamsUP &params) {
-    DEBUG_ENTER("documentSymbols");
+    DEBUG_ENTER("documentSymbols %s", params->getTextDocument()->getUri().c_str());
     SourceFileData *src = 0;
     zsp::ast::IGlobalScope *global = 0;
+
+    // Because we're just looking at symbols in a single file,
+    // we only need to predicate symbols on live updates to 
+    // this file.
+    // - Pending 'didOpen' handling
+    // - Pending 'fileChange' operations
 
     lls::IDocumentSymbolResponseUP response;
     if (m_source_files->hasFile(params->getTextDocument()->getUri())) {

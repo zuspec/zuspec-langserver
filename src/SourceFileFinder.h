@@ -19,6 +19,7 @@
  *     Author: 
  */
 #pragma once
+#include "dmgr/IDebugMgr.h"
 #include "SourceFileCollection.h"
 
 namespace zsp {
@@ -28,7 +29,7 @@ class SourceFileFinder;
 using SourceFileFinderUP=std::unique_ptr<SourceFileFinder>;
 class SourceFileFinder {
 public:
-    SourceFileFinder();
+    SourceFileFinder(dmgr::IDebugMgr *dmgr);
 
     virtual ~SourceFileFinder();
 
@@ -42,6 +43,7 @@ protected:
     void find(const std::string &dir);
 
 private:
+    static dmgr::IDebug         *m_dbg;
     SourceFileCollection        *m_collection;
 
 };

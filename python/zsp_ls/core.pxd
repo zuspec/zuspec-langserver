@@ -24,3 +24,5 @@ cdef class ThreadMain(object):
 
     cpdef bool start(self)
 
+    cpdef bool join(self)
+

@@ -86,3 +86,6 @@ cdef class ThreadMain(object):
 
     cpdef bool start(self):
         return self._hndl.start()
+
+    cpdef bool join(self):
+        return self._hndl.join()

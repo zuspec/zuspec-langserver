@@ -25,6 +25,8 @@
 #include "zsp/ast/IFactory.h"
 #include "zsp/parser/IAstBuilder.h"
 #include "zsp/parser/IMarkerListener.h"
+#include "Context.h"
+#include "SourceFileCollection.h"
 #include "SourceFileData.h"
 
 namespace zsp {
@@ -37,9 +39,8 @@ class TaskUpdateSourceFileData :
     public virtual jrpc::ITask {
 public:
     TaskUpdateSourceFileData(
-        lls::IFactory               *factory,
-        lls::IClient                *client,
-        zsp::parser::IAstBuilder    *ast_builder,
+        Context                     *ctxt,
+        SourceFileCollection        *files,
         SourceFileData              *file);
 
     virtual ~TaskUpdateSourceFileData();
@@ -52,9 +53,8 @@ public:
 
 private:
     static dmgr::IDebug                 *m_dbg;
-    lls::IFactory                       *m_factory;
-    lls::IClient                        *m_client;
-    zsp::parser::IAstBuilder            *m_ast_builder;
+    Context                             *m_ctxt;
+    SourceFileCollection                *m_files;
     SourceFileData                      *m_file;
     int                                 m_has[(int)zsp::parser::MarkerSeverityE::NumLevels];
     std::vector<lls::IDiagnosticUP>     m_diagnostics;

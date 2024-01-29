@@ -32,13 +32,11 @@ namespace ls {
 
 
 TaskUpdateSourceFileData::TaskUpdateSourceFileData(
-    lls::IFactory                   *factory,
-    lls::IClient                    *client,
-    zsp::parser::IAstBuilder        *ast_builder,
+    Context                         *ctxt,
+    SourceFileCollection            *files,
     SourceFileData                  *file) :
-        m_factory(factory), m_client(client), 
-        m_ast_builder(ast_builder), m_file(file) {
-    DEBUG_INIT("TaskUpdateSourceFileData", factory->getDebugMgr());
+        m_ctxt(ctxt), m_files(files), m_file(file) {
+    DEBUG_INIT("TaskUpdateSourceFileData", ctxt->getDebugMgr());
     memset(m_has, 0, sizeof(m_has));
     DEBUG("src.getLiveContent.size()=%d", file->getLiveContent().size());
 }
@@ -50,8 +48,10 @@ TaskUpdateSourceFileData::~TaskUpdateSourceFileData() {
 bool TaskUpdateSourceFileData::run(jrpc::ITaskQueue *queue) {
     DEBUG_ENTER("run");
     zsp::ast::IGlobalScopeUP global(
-        m_ast_builder->getFactory()->mkGlobalScope(m_file->getId()));
-    m_ast_builder->setMarkerListener(this);
+        m_ctxt->getAstFactory()->mkGlobalScope(m_file->getId()));
+    zsp::parser::IAstBuilder *builder = m_ctxt->allocAstBuilder();
+    builder->setMarkerListener(this);
+
     std::istream *is = 0;
     std::stringstream sstr;
     std::ifstream fstr;
@@ -73,10 +73,9 @@ bool TaskUpdateSourceFileData::run(jrpc::ITaskQueue *queue) {
     }
 
     if (is) {
-    m_ast_builder->build(
-        global.get(),
-        is
-    );
+        builder->build(
+            global.get(),
+            is);
     }
 
     if (is == &fstr) {
@@ -96,13 +95,15 @@ bool TaskUpdateSourceFileData::run(jrpc::ITaskQueue *queue) {
     // This operation clears the previously-set markers
     if (true /*m_diagnostics.size() > 0 || m_file->haveMarkers() */) {
         m_file->setHaveMarkers(m_diagnostics.size() > 0);
-        lls::IPublishDiagnosticsParamsUP params(m_factory->mkPublishDiagnosticsParams(
+        lls::IPublishDiagnosticsParamsUP params(m_ctxt->getLspFactory()->mkPublishDiagnosticsParams(
             m_file->getUri(),
             -1,
             m_diagnostics));
 
-        m_client->publishDiagnosticsNotification(params);
+        m_ctxt->getClient()->publishDiagnosticsNotification(params);
     }
+
+    m_ctxt->freeAstBuilder(builder);
 
     DEBUG_LEAVE("run");
     return false;
@@ -128,10 +129,10 @@ void TaskUpdateSourceFileData::marker(const zsp::parser::IMarker *m) {
             break;
     }
 
-    lls::IPositionUP start(m_factory->mkPosition(m->loc().lineno, m->loc().linepos));
-    lls::IPositionUP end(m_factory->mkPosition(m->loc().lineno, m->loc().linepos+1));
-    lls::IRangeUP range(m_factory->mkRange(start, end));
-    lls::IDiagnosticUP diagnostic(m_factory->mkDiagnostic(
+    lls::IPositionUP start(m_ctxt->getLspFactory()->mkPosition(m->loc().lineno, m->loc().linepos));
+    lls::IPositionUP end(m_ctxt->getLspFactory()->mkPosition(m->loc().lineno, m->loc().linepos+1));
+    lls::IRangeUP range(m_ctxt->getLspFactory()->mkRange(start, end));
+    lls::IDiagnosticUP diagnostic(m_ctxt->getLspFactory()->mkDiagnostic(
         range,
         severity,
         m->msg()

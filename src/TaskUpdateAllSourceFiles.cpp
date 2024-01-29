@@ -26,12 +26,9 @@ namespace ls {
 
 
 TaskUpdateAllSourceFiles::TaskUpdateAllSourceFiles(
-    lls::IFactory               *factory,
-    lls::IClient                *client,
-    zsp::parser::IAstBuilder    *ast_builder,
+    Context                     *ctxt,
     SourceFileCollection        *src_files) :
-        m_factory(factory), m_client(client),
-        m_ast_builder(ast_builder), m_src_files(src_files) {
+        m_ctxt(ctxt), m_src_files(src_files) {
 
 }
 

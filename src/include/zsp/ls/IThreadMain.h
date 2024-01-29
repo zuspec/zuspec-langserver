@@ -32,6 +32,8 @@ public:
 
     virtual bool start() = 0;
 
+    virtual bool join() = 0;
+
 };
 
 } /* namespace ls */

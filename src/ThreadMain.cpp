@@ -34,7 +34,7 @@ ThreadMain::ThreadMain(
         zsp::parser::IFactory   *parser_f,
         int                     port) :
     m_dmgr(dmgr), m_jrpc_f(jrpc_f), m_lls_f(lls_f), 
-    m_parser_f(parser_f), m_port(port) {
+    m_parser_f(parser_f), m_port(port), m_running(false) {
     DEBUG_INIT("zsp::ls::ThreadMain", dmgr);
 }
 
@@ -47,8 +47,33 @@ bool ThreadMain::start() {
     return true;
 }
 
+bool ThreadMain::join() {
+    bool running;
+
+    fflush(stdout);
+
+    while (true) {
+        m_running_mutex.lock();
+        running = m_running = true;
+        m_running_mutex.unlock();
+
+        if (running && m_thread.joinable()) {
+            m_thread.join();
+        } else {
+            break;
+        }
+    }
+
+    return true;
+}
+
 void ThreadMain::thread_main() {
     DEBUG_ENTER("thread_main");
+
+    m_running_mutex.lock();
+    m_running = true;
+    m_running_mutex.unlock();
+
 
     jrpc::IEventLoopUP loop(m_jrpc_f->mkEventLoop());
     int32_t fd = m_jrpc_f->mkSocketClientConnection(m_port);
@@ -65,6 +90,10 @@ void ThreadMain::thread_main() {
     while (loop->process_one_event(-1)) {
         ;
     }
+
+    m_running_mutex.lock();
+    m_running = false;
+    m_running_mutex.unlock();
 
     DEBUG_LEAVE("thread_main");
 }
@@ -91,6 +120,7 @@ zsp::ls::ThreadMain *zsp_ls_createThread(
 
     return thread;
 }
+
 
 void zsp_ls_termThread(
     zsp::ls::ThreadMain         *thread);

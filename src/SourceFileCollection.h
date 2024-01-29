@@ -20,7 +20,11 @@
  */
 #pragma once
 #include <map>
+#include <mutex>
 #include <vector>
+#include "dmgr/IDebugMgr.h"
+#include "jrpc/ITaskQueue.h"
+#include "Context.h"
 #include "SourceFileData.h"
 
 namespace zsp {
@@ -30,7 +34,9 @@ class SourceFileCollection;
 using SourceFileCollectionUP=std::unique_ptr<SourceFileCollection>;
 class SourceFileCollection {
 public:
-    SourceFileCollection();
+    SourceFileCollection(
+        dmgr::IDebugMgr     *dmgr,
+        jrpc::ITaskQueue    *queue);
 
     virtual ~SourceFileCollection();
 
@@ -44,7 +50,17 @@ public:
         return m_file_l;
     }
 
+    virtual void updateLiveContent(
+        Context                     *ctxt,
+        const std::string           &uri,
+        const std::string           &liveContent);
+
 private:
+    static dmgr::IDebug                     *m_dbg;
+    dmgr::IDebugMgr                         *m_dmgr;
+    jrpc::ITaskQueue                        *m_queue;
+    std::mutex                              m_mutex;
+    std::map<std::string, jrpc::ITask *>    m_live_update_m;
     std::map<std::string,int32_t>           m_uri_id_m;
     std::vector<SourceFileDataUP>           m_file_l;
 

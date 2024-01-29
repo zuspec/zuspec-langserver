@@ -18,13 +18,17 @@
  * Created on:
  *     Author:
  */
+#include "dmgr/impl/DebugMacros.h"
 #include "SourceFileCollection.h"
+#include "TaskUpdateSourceFileData.h"
 
 namespace zsp {
 namespace ls {
 
 
-SourceFileCollection::SourceFileCollection() {
+SourceFileCollection::SourceFileCollection(
+    dmgr::IDebugMgr         *dmgr,
+    jrpc::ITaskQueue        *queue) : m_dmgr(dmgr), m_queue(queue) {
 
 }
 
@@ -50,6 +54,27 @@ SourceFileData *SourceFileCollection::getFile(const std::string &uri) {
         return 0;
     }
 }
+
+void SourceFileCollection::updateLiveContent(
+        Context                     *ctxt,
+        const std::string           &uri,
+        const std::string           &liveContent) {
+    DEBUG_ENTER("updateLiveContent: %s", uri.c_str());
+    SourceFileData *src = getFile(uri);
+    if (!src) {
+        DEBUG_LEAVE("updateLiveContent - error, file not managed");
+        return;
+    }
+
+    jrpc::ITaskUP task(new TaskUpdateSourceFileData(
+        ctxt,
+        this,
+        src));
+
+    DEBUG_LEAVE("updateLiveContent: %s", uri.c_str());
+}
+
+dmgr::IDebug *SourceFileCollection::m_dbg = 0;
 
 }
 }

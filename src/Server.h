@@ -22,6 +22,7 @@
 #include "jrpc/ITaskQueue.h"
 #include "lls/impl/ServerBase.h"
 #include "zsp/parser/IFactory.h"
+#include "Context.h"
 #include "SourceFileCollection.h"
 
 namespace zsp {
@@ -55,10 +56,9 @@ public:
 
 protected:
     static dmgr::IDebug         *m_dbg;
-    zsp::parser::IAstBuilderUP  m_ast_builder;
-    zsp::parser::IFactory       *m_parser_factory;
-    SourceFileCollectionUP      m_source_files;
     jrpc::ITaskQueueUP          m_queue;
+    ContextUP                   m_ctxt;
+    SourceFileCollectionUP      m_source_files;
 
 };
 

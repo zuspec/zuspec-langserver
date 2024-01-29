@@ -44,7 +44,7 @@ TaskFindSourceFiles::~TaskFindSourceFiles() {
 bool TaskFindSourceFiles::run(jrpc::ITaskQueue *queue) {
     DEBUG_ENTER("run");
 
-    SourceFileFinder finder;
+    SourceFileFinder finder(m_factory->getDebugMgr());
 
     for (std::vector<std::string>::const_iterator
         it=m_roots.begin();

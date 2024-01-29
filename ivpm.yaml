@@ -26,5 +26,7 @@ package:
        src: pypi
      - name: pytest
        src: pypi
+     - name: pygls
+       url: https://github.com/openlawlibrary/pygls.git
 
   

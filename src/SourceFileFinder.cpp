@@ -18,6 +18,7 @@
  * Created on:
  *     Author:
  */
+#include "dmgr/impl/DebugMacros.h"
 #include "SourceFileFinder.h"
 #include <dirent.h>
 #include <string.h>
@@ -29,7 +30,8 @@ namespace zsp {
 namespace ls {
 
 
-SourceFileFinder::SourceFileFinder() {
+SourceFileFinder::SourceFileFinder(dmgr::IDebugMgr *dmgr) {
+    DEBUG_INIT("zsp::ls::SourceFileFinder", dmgr);
 
 }
 
@@ -40,11 +42,14 @@ SourceFileFinder::~SourceFileFinder() {
 void SourceFileFinder::find(
     SourceFileCollection        *collection,
     const std::string           &root) {
+    DEBUG_ENTER("find: %s", root.c_str());
     m_collection = collection;
     find(root);
+    DEBUG_LEAVE("find: %s", root.c_str());
 }
 
 void SourceFileFinder::find(const std::string &path) {
+    DEBUG_ENTER("find(path): %s", path.c_str());
     DIR *dir;
     struct stat stat_path, stat_entry;
     struct dirent *entry;
@@ -94,7 +99,10 @@ void SourceFileFinder::find(const std::string &path) {
     }
 
     closedir(dir);
+    DEBUG_LEAVE("find(path): %s", path.c_str());
 }
+
+dmgr::IDebug *SourceFileFinder::m_dbg = 0;
 
 }
 }

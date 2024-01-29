@@ -26,3 +26,4 @@ cdef extern from "zsp/ls/IFactory.h" namespace "zsp::ls":
 cdef extern from "zsp/ls/IThreadMain.h" namespace "zsp::ls":
     cdef cppclass IThreadMain:
         bool start();
+        bool join();

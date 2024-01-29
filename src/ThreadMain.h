@@ -19,6 +19,8 @@
  *     Author: 
  */
 #pragma once
+#include <condition_variable>
+#include <mutex>
 #include <thread>
 #include "dmgr/IDebugMgr.h"
 #include "jrpc/IFactory.h"
@@ -49,6 +51,8 @@ public:
 
     bool start();
 
+    bool join();
+
 private:
     void thread_main();
 
@@ -59,7 +63,9 @@ private:
     lls::IFactory               *m_lls_f;
     zsp::parser::IFactory       *m_parser_f;
     int                         m_port;
+    bool                        m_running;
     std::thread                 m_thread;
+    std::mutex                  m_running_mutex;
 };
 
 }

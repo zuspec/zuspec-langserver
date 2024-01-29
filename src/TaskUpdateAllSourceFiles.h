@@ -22,6 +22,7 @@
 #include "jrpc/ITask.h"
 #include "lls/IFactory.h"
 #include "zsp/parser/IAstBuilder.h"
+#include "Context.h"
 #include "SourceFileCollection.h"
 
 namespace zsp {
@@ -32,9 +33,7 @@ namespace ls {
 class TaskUpdateAllSourceFiles : public virtual jrpc::ITask {
 public:
     TaskUpdateAllSourceFiles(
-        lls::IFactory               *factory,
-        lls::IClient                *client,
-        zsp::parser::IAstBuilder    *ast_builder,
+        Context                     *ctxt,
         SourceFileCollection        *src_files
     );
 
@@ -43,9 +42,7 @@ public:
     virtual bool run(jrpc::ITaskQueue *queue) override;
 
 private:
-    lls::IFactory                   *m_factory;
-    lls::IClient                    *m_client;
-    zsp::parser::IAstBuilder        *m_ast_builder;
+    Context                         *m_ctxt;
     SourceFileCollection            *m_src_files;
 
 };
