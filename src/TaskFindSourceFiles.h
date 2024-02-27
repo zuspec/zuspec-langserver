@@ -21,7 +21,7 @@
 #pragma once
 #include <string>
 #include <vector>
-#include "jrpc/ITask.h"
+#include "jrpc/impl/TaskBase.h"
 #include "lls/IFactory.h"
 #include "SourceFileCollection.h"
 
@@ -29,17 +29,22 @@ namespace zsp {
 namespace ls {
 
 
-class TaskFindSourceFiles : public virtual jrpc::ITask {
+class TaskFindSourceFiles : public virtual jrpc::TaskBase {
 public:
 
     TaskFindSourceFiles(
+        jrpc::ITaskGroup                *group,
         lls::IFactory                   *factory,
         SourceFileCollection            *src_files,
         const std::vector<std::string>  &roots);
 
+    TaskFindSourceFiles(TaskFindSourceFiles *o);
+
     virtual ~TaskFindSourceFiles();
 
-    virtual bool run(jrpc::ITaskQueue *queue) override;
+    virtual jrpc::TaskStatus run() override;
+
+    virtual TaskFindSourceFiles *clone() override;
 
 private:
     static dmgr::IDebug                 *m_dbg;

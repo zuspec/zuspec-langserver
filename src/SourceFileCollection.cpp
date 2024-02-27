@@ -66,10 +66,12 @@ void SourceFileCollection::updateLiveContent(
         return;
     }
 
+    /** TODO:
     jrpc::ITaskUP task(new TaskUpdateSourceFileData(
         ctxt,
         this,
         src));
+     */
 
     DEBUG_LEAVE("updateLiveContent: %s", uri.c_str());
 }

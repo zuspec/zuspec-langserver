@@ -27,6 +27,8 @@ include(ivpm)
 
 Ivpm_AddPythonExtProject(debug-mgr debug_mgr)
 Ivpm_AddPythonExtProject(zuspec-parser zuspec_parser)
+Ivpm_AddPythonExtProject(libjson-rpc libjson_rpc)
+Ivpm_AddPythonExtProject(liblangserver liblangserver)
 
 set(CMAKE_CXX_STANDARD 11)
 #set(CMAKE_JAVA_COMPILE_FLAGS "-source" "1.8" "-target" "1.8")
@@ -35,23 +37,23 @@ include_directories(
 	${PACKAGES_DIR}/json/include
 	)
 
-ExternalProject_Add(JRPC
-    PREFIX jrpc 
-    SOURCE_DIR "${PACKAGES_DIR}/libjson-rpc" 
-    CMAKE_CACHE_ARGS 
-    -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}/jrpc
-    -DCMAKE_BUILD_TYPE:String=${CMAKE_BUILD_TYPE}
-    -DPACKAGES_DIR:PATH=${PACKAGES_DIR}
-    )
+# ExternalProject_Add(JRPC
+#     PREFIX jrpc 
+#     SOURCE_DIR "${PACKAGES_DIR}/libjson-rpc" 
+#     CMAKE_CACHE_ARGS 
+#     -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}/jrpc
+#     -DCMAKE_BUILD_TYPE:String=${CMAKE_BUILD_TYPE}
+#     -DPACKAGES_DIR:PATH=${PACKAGES_DIR}
+#     )
 
-ExternalProject_Add(LLS
-    PREFIX lls 
-    SOURCE_DIR "${PACKAGES_DIR}/liblangserver"
-    CMAKE_CACHE_ARGS 
-    -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}/lls
-    -DCMAKE_BUILD_TYPE:String=${CMAKE_BUILD_TYPE}
-    -DPACKAGES_DIR:PATH=${PACKAGES_DIR}
-    )
+# ExternalProject_Add(LLS
+#     PREFIX lls 
+#     SOURCE_DIR "${PACKAGES_DIR}/liblangserver"
+#     CMAKE_CACHE_ARGS 
+#     -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}/lls
+#     -DCMAKE_BUILD_TYPE:String=${CMAKE_BUILD_TYPE}
+#     -DPACKAGES_DIR:PATH=${PACKAGES_DIR}
+#     )
 	
 set(CompilerFlags
         CMAKE_CXX_FLAGS

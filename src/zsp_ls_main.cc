@@ -58,6 +58,7 @@ int main(int argc, char **argv) {
 
     DEBUG_INIT("zsp-langserver", dmgr);
 
+    dmgr->registerSignalHandlers();
     dmgr->enable(true);
 
     DEBUG("Hello");

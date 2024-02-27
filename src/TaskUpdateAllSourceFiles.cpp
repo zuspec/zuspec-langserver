@@ -26,9 +26,10 @@ namespace ls {
 
 
 TaskUpdateAllSourceFiles::TaskUpdateAllSourceFiles(
+    jrpc::ITaskGroup            *group,
     Context                     *ctxt,
     SourceFileCollection        *src_files) :
-        m_ctxt(ctxt), m_src_files(src_files) {
+        TaskBase(group), m_ctxt(ctxt), m_src_files(src_files) {
 
 }
 
@@ -36,7 +37,7 @@ TaskUpdateAllSourceFiles::~TaskUpdateAllSourceFiles() {
 
 }
 
-bool TaskUpdateAllSourceFiles::run(jrpc::ITaskQueue *queue) {
+jrpc::TaskStatus TaskUpdateAllSourceFiles::run() {
 
 }
 

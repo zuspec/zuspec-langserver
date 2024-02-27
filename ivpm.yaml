@@ -12,6 +12,8 @@ package:
    deps: []
    
    dev-deps:
+     - name: debug-mgr
+       url: https://github.com/mballance-utils/debug-mgr.git
      - name: liblangserver
        url: https://github.com/mballance-utils/liblangserver.git
      - name: zuspec-parser

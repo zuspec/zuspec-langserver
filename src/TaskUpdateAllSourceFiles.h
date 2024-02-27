@@ -19,7 +19,7 @@
  *     Author: 
  */
 #pragma once
-#include "jrpc/ITask.h"
+#include "jrpc/impl/TaskBase.h"
 #include "lls/IFactory.h"
 #include "zsp/parser/IAstBuilder.h"
 #include "Context.h"
@@ -30,16 +30,17 @@ namespace ls {
 
 
 
-class TaskUpdateAllSourceFiles : public virtual jrpc::ITask {
+class TaskUpdateAllSourceFiles : public virtual jrpc::TaskBase {
 public:
     TaskUpdateAllSourceFiles(
+        jrpc::ITaskGroup            *group,
         Context                     *ctxt,
         SourceFileCollection        *src_files
     );
 
     virtual ~TaskUpdateAllSourceFiles();
 
-    virtual bool run(jrpc::ITaskQueue *queue) override;
+    virtual jrpc::TaskStatus run() override;
 
 private:
     Context                         *m_ctxt;

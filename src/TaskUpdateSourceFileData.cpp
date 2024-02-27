@@ -32,20 +32,27 @@ namespace ls {
 
 
 TaskUpdateSourceFileData::TaskUpdateSourceFileData(
+    jrpc::ITaskGroup                *group,
     Context                         *ctxt,
     SourceFileCollection            *files,
-    SourceFileData                  *file) :
+    SourceFileData                  *file) : TaskBase(group),
         m_ctxt(ctxt), m_files(files), m_file(file) {
     DEBUG_INIT("TaskUpdateSourceFileData", ctxt->getDebugMgr());
     memset(m_has, 0, sizeof(m_has));
     DEBUG("src.getLiveContent.size()=%d", file->getLiveContent().size());
 }
 
+TaskUpdateSourceFileData::TaskUpdateSourceFileData(TaskUpdateSourceFileData *o) :
+    TaskBase(this), m_ctxt(o->m_ctxt), m_files(o->m_files),
+    m_file(o->m_file) {
+
+};
+
 TaskUpdateSourceFileData::~TaskUpdateSourceFileData() {
 
 }
 
-bool TaskUpdateSourceFileData::run(jrpc::ITaskQueue *queue) {
+jrpc::TaskStatus TaskUpdateSourceFileData::run() {
     DEBUG_ENTER("run");
     zsp::ast::IGlobalScopeUP global(
         m_ctxt->getAstFactory()->mkGlobalScope(m_file->getId()));
@@ -106,7 +113,7 @@ bool TaskUpdateSourceFileData::run(jrpc::ITaskQueue *queue) {
     m_ctxt->freeAstBuilder(builder);
 
     DEBUG_LEAVE("run");
-    return false;
+    return jrpc::TaskStatus::Done;
 }
 
 void TaskUpdateSourceFileData::marker(const zsp::parser::IMarker *m) {

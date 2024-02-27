@@ -38,10 +38,14 @@ public:
         zsp::parser::IFactory   *parser_factory);
 
     virtual ~Server();
+    
+    virtual void init(lls::IClient *client) override;
 
     virtual jrpc::ITaskQueue *getQueue() const { return m_queue.get(); }
 
-    virtual lls::IHoverUP hover(lls::IHoverParamsUP &params) override;
+    virtual lls::IHoverUP hover(
+        const std::string       &id,
+        lls::IHoverParamsUP     &params) override;
 
 	virtual lls::IInitializeResultUP initialize(lls::IInitializeParamsUP &params) override;
 
@@ -52,7 +56,8 @@ public:
     virtual void didClose(lls::IDidCloseTextDocumentParamsUP &params) override;
 
     virtual lls::IDocumentSymbolResponseUP documentSymbols(
-            lls::IDocumentSymbolParamsUP &params) override;
+        const std::string               &id,
+        lls::IDocumentSymbolParamsUP    &params) override;
 
 protected:
     static dmgr::IDebug         *m_dbg;

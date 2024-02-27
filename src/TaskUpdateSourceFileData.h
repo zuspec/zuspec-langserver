@@ -20,6 +20,7 @@
  */
 #pragma once
 #include "jrpc/ITask.h"
+#include "jrpc/impl/TaskBase.h"
 #include "lls/IClient.h"
 #include "lls/IFactory.h"
 #include "zsp/ast/IFactory.h"
@@ -36,16 +37,23 @@ namespace ls {
 
 class TaskUpdateSourceFileData :
     public virtual zsp::parser::IMarkerListener,
-    public virtual jrpc::ITask {
+    public virtual jrpc::TaskBase {
 public:
     TaskUpdateSourceFileData(
+        jrpc::ITaskGroup            *group,
         Context                     *ctxt,
         SourceFileCollection        *files,
         SourceFileData              *file);
 
+    TaskUpdateSourceFileData(TaskUpdateSourceFileData *o);
+
     virtual ~TaskUpdateSourceFileData();
 
-    virtual bool run(jrpc::ITaskQueue *queue) override;
+    virtual jrpc::TaskStatus run() override;
+
+    virtual TaskUpdateSourceFileData *clone() override {
+        return new TaskUpdateSourceFileData(this);
+    }
 
 	virtual void marker(const zsp::parser::IMarker *m) override;
 

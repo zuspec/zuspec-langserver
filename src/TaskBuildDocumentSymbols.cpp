@@ -185,16 +185,19 @@ std::pair<lls::IRangeUP, lls::IRangeUP> TaskBuildDocumentSymbols::getScopeRange(
     lls::IPositionUP start, end;
     start = m_factory->mkPosition(
         s->getLocation().lineno-1, 
-        s->getLocation().linepos-1);
+        (s->getLocation().linepos>0)?
+            s->getLocation().linepos-1:0);
     end = m_factory->mkPosition(
         s->getEndLocation().lineno-1, 
-        s->getEndLocation().linepos-1);
+        (s->getEndLocation().linepos>0)?
+            s->getEndLocation().linepos-1:0);
     range = m_factory->mkRange(
         start,
         end);
     start = m_factory->mkPosition(
         s->getLocation().lineno-1, 
-        s->getLocation().linepos-1);
+        (s->getLocation().linepos>0)?
+            s->getLocation().linepos-1:0);
     end = m_factory->mkPosition(
         s->getLocation().lineno-1, 
         s->getLocation().linepos+s->getName()->getId().size()-1);
@@ -212,16 +215,19 @@ std::pair<lls::IRangeUP, lls::IRangeUP> TaskBuildDocumentSymbols::getScopeRange(
     lls::IPositionUP start, end;
     start = m_factory->mkPosition(
         s->getLocation().lineno-1, 
-        s->getLocation().linepos-1);
+        (s->getLocation().linepos>0)?
+            s->getLocation().linepos-1:0);
     end = m_factory->mkPosition(
         s->getEndLocation().lineno-1, 
-        s->getEndLocation().linepos-1);
+        (s->getEndLocation().linepos>0)?
+            s->getEndLocation().linepos-1:0);
     range = m_factory->mkRange(
         start,
         end);
     start = m_factory->mkPosition(
         s->getLocation().lineno-1, 
-        s->getLocation().linepos-1);
+        (s->getLocation().linepos>0)?
+            s->getLocation().linepos-1:0);
     end = m_factory->mkPosition(
         s->getLocation().lineno-1, 
         s->getLocation().linepos+s->getId().back()->getId().size()-1);
@@ -239,7 +245,8 @@ std::pair<lls::IRangeUP, lls::IRangeUP> TaskBuildDocumentSymbols::getItemRange(
     lls::IPositionUP start, end;
     start = m_factory->mkPosition(
         s->getLocation().lineno-1, 
-        s->getLocation().linepos-1);
+        (s->getLocation().linepos>0)?
+            s->getLocation().linepos-1:0);
     end = m_factory->mkPosition(
         s->getLocation().lineno-1, 
         s->getLocation().linepos+s->getName()->getId().size()-1);

@@ -61,6 +61,10 @@ public:
         return m_client;
     }
 
+    virtual void setClient(lls::IClient *client) {
+        m_client = client;
+    }
+
     virtual zsp::parser::IAstBuilder *allocAstBuilder();
 
     virtual void freeAstBuilder(zsp::parser::IAstBuilder *builder);

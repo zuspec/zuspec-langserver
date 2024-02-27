@@ -39,7 +39,12 @@ Server::Server(
             m_ctxt(new Context(
                 lls_factory->getDebugMgr(),
                 m_queue.get(),
-                lls_factory, m_client, parser_factory)) {
+                lls_factory, 
+                m_client, 
+                parser_factory)),
+            m_source_files(new SourceFileCollection(
+                lls_factory->getDebugMgr(),
+                m_queue.get())) {
     DEBUG_INIT("zsp::ls::Server", m_ctxt->getDebugMgr());
 }
 
@@ -47,10 +52,23 @@ Server::~Server() {
 
 }
 
-lls::IHoverUP Server::hover(lls::IHoverParamsUP &params) {
+void Server::init(lls::IClient *client) {
+    lls::ServerBase::init(client);
+    m_ctxt->setClient(client);
+}
+
+lls::IHoverUP Server::hover(
+    const std::string       &id,
+    lls::IHoverParamsUP     &params) {
     DEBUG_ENTER("hover");
+    // File supports multiple simultaneous readers
+    // Multiple can read-lock, while only one can write-lock
+    // - Lock file, ensuring any activity involving it is complete
+    //   - This keeps the 
+    // - 
     lls::IContentUP content(m_factory->mkContentMarkedString("", "Hello World!"));
     lls::IRangeUP range;
+
     DEBUG_LEAVE("hover");
 
     return lls::IHoverUP(m_factory->mkHover(content, range));
@@ -81,8 +99,11 @@ lls::IInitializeResultUP Server::initialize(lls::IInitializeParamsUP &params) {
         roots.push_back(*it);
     }
 
-    jrpc::ITaskUP task(new TaskFindSourceFiles(m_factory, m_source_files.get(), roots));
-    m_queue->addTask(task);
+    m_queue->addTask(new TaskFindSourceFiles(
+        m_queue->mkTaskGroup(),
+        m_factory, 
+        m_source_files.get(),
+        roots), true);
 
     lls::IInitializeResultUP ret(m_factory->mkInitializeResult(
         capabilites,
@@ -94,6 +115,16 @@ lls::IInitializeResultUP Server::initialize(lls::IInitializeParamsUP &params) {
 void Server::didOpen(lls::IDidOpenTextDocumentParamsUP &params) {
     DEBUG_ENTER("didOpen");
     SourceFileData *src;
+
+    // TaskGroup
+    // - Ensure file discovery is up-to-date
+    // - Acquire lock on URI
+    //   - Obtain or create 'src'
+    //   - Parse live content (no need to lock)
+    //   - Create "everything but me" linked image
+    //   - Create initial "everything + live" linked image
+    //   - Send response
+    //   - Queue any marker-propagation tasks
 
     if (m_source_files->hasFile(params->getTextDocument()->getUri())) {
         DEBUG("File already found");
@@ -114,11 +145,11 @@ void Server::didOpen(lls::IDidOpenTextDocumentParamsUP &params) {
     DEBUG("  Set Live Content: %d", src->getLiveContent().size());
 
     // Now, queue this file for parsing
-    jrpc::ITaskUP task(new TaskUpdateSourceFileData(
+    m_queue->addTaskPreempt(new TaskUpdateSourceFileData(
+        m_queue->mkTaskGroup(),
         m_ctxt.get(),
         m_source_files.get(),
-        src));
-    m_queue->addTaskPreempt(task);
+        src), true);
     DEBUG_LEAVE("didOpen");
 }
 
@@ -148,11 +179,11 @@ void Server::didChange(lls::IDidChangeTextDocumentParamsUP &params) {
     // parsed *and* any updates of non-live content completing
 
     // Now, queue this file for parsing
-    jrpc::ITaskUP task(new TaskUpdateSourceFileData(
+    m_queue->addTask(new TaskUpdateSourceFileData(
+        m_queue->mkTaskGroup(),
         m_ctxt.get(),
         m_source_files.get(),
-        src));
-    m_queue->addTask(task);
+        src), true);
 }
 
 void Server::didClose(lls::IDidCloseTextDocumentParamsUP &params) {
@@ -169,16 +200,17 @@ void Server::didClose(lls::IDidCloseTextDocumentParamsUP &params) {
     src->setLiveContent("");
 
     // Now, queue this file for parsing
-    jrpc::ITaskUP task(new TaskUpdateSourceFileData(
+    jrpc::TaskStatus ret = TaskUpdateSourceFileData(
+        m_queue->mkTaskGroup(),
         m_ctxt.get(),
-        m_source_files.get(),
-        src));
-    m_queue->addTask(task);
+        m_source_files.get(), src).run();
+
     DEBUG_LEAVE("didClose");
 }
 
 lls::IDocumentSymbolResponseUP Server::documentSymbols(
-            lls::IDocumentSymbolParamsUP &params) {
+    const std::string               &id,
+    lls::IDocumentSymbolParamsUP    &params) {
     DEBUG_ENTER("documentSymbols %s", params->getTextDocument()->getUri().c_str());
     SourceFileData *src = 0;
     zsp::ast::IGlobalScope *global = 0;
@@ -188,6 +220,12 @@ lls::IDocumentSymbolResponseUP Server::documentSymbols(
     // this file.
     // - Pending 'didOpen' handling
     // - Pending 'fileChange' operations
+    // 
+    // First, check if 'global' is locked
+    // - If so, wait
+    // Next, check if <file> is locked
+    // - If so, wait
+    // Finally, lock file m,.
 
     lls::IDocumentSymbolResponseUP response;
     if (m_source_files->hasFile(params->getTextDocument()->getUri())) {

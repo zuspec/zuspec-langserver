@@ -12,6 +12,8 @@ link_directories(
 	${CMAKE_BINARY_DIR}/lls/lib64
     "${debug_mgr_LIBDIR}"
     "${zuspec_parser_LIBDIR}"
+    "${libjson_rpc_LIBDIR}"
+    "${liblangserver_LIBDIR}"
 	)
 
 file(GLOB zsp_ls_SRC
@@ -28,6 +30,8 @@ target_include_directories(zsp-ls PRIVATE
     "${PACKAGES_DIR}/liblangserver/src/include"
     "${debug_mgr_INCDIR}"
     "${zuspec_parser_INCDIR}"
+    "${libjson_rpc_INCDIR}"
+    "${liblangserver_INCDIR}"
     )
 #target_link_libraries(zsp-ls
 #    json-rpc
@@ -52,13 +56,15 @@ target_include_directories(zsp-langserver PRIVATE
     "${PACKAGES_DIR}/liblangserver/src/include"
     "${debug_mgr_INCDIR}"
     "${zuspec_parser_INCDIR}"
+    "${libjson_rpc_INCDIR}"
+    "${liblangserver_INCDIR}"
     )
 
 
 install(TARGETS zsp-ls
     DESTINATION lib
     EXPORT zsp_ls-targets)
-add_dependencies(zsp-ls JRPC LLS)
+#add_dependencies(zsp-ls JRPC LLS)
     
 set_target_properties(zsp-ls PROPERTIES SKIP_BUILD_RPATH TRUE)
 

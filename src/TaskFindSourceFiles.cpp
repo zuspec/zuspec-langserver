@@ -29,19 +29,26 @@ namespace ls {
 
 
 TaskFindSourceFiles::TaskFindSourceFiles(
+    jrpc::ITaskGroup                    *group,
     lls::IFactory                       *factory,
     SourceFileCollection                *src_files,
     const std::vector<std::string>      &roots) :
-        m_factory(factory), m_src_files(src_files),
+        TaskBase(group), m_factory(factory), m_src_files(src_files),
         m_roots(roots.begin(), roots.end()) {
     DEBUG_INIT("TaskFindSourceFiles", factory->getDebugMgr());
+}
+
+TaskFindSourceFiles::TaskFindSourceFiles(TaskFindSourceFiles *o) :
+    TaskBase(this), m_factory(o->m_factory), m_src_files(o->m_src_files),
+    m_roots(o->m_roots.begin(), o->m_roots.end()) {
+
 }
 
 TaskFindSourceFiles::~TaskFindSourceFiles() {
 
 }
 
-bool TaskFindSourceFiles::run(jrpc::ITaskQueue *queue) {
+jrpc::TaskStatus TaskFindSourceFiles::run() {
     DEBUG_ENTER("run");
 
     SourceFileFinder finder(m_factory->getDebugMgr());
@@ -61,7 +68,11 @@ bool TaskFindSourceFiles::run(jrpc::ITaskQueue *queue) {
 
     DEBUG_LEAVE("run");
 
-    return false;
+    return jrpc::TaskStatus::Done;
+}
+
+TaskFindSourceFiles *TaskFindSourceFiles::clone() {
+    return new TaskFindSourceFiles(this);
 }
 
 dmgr::IDebug *TaskFindSourceFiles::m_dbg = 0;

@@ -35,5 +35,7 @@ build/
 packages/
 __pycache__/
 core.cpp
-*.egg-info
+*.egg-info/
 .eggs/
+
+rundir/
