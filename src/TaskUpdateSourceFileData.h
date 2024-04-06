@@ -40,7 +40,7 @@ class TaskUpdateSourceFileData :
     public virtual jrpc::TaskBase {
 public:
     TaskUpdateSourceFileData(
-        jrpc::ITaskGroup            *group,
+        jrpc::ITaskQueue            *queue,
         Context                     *ctxt,
         SourceFileCollection        *files,
         SourceFileData              *file);
@@ -49,7 +49,7 @@ public:
 
     virtual ~TaskUpdateSourceFileData();
 
-    virtual jrpc::TaskStatus run() override;
+    virtual jrpc::ITask *run(jrpc::ITask *parent, bool initial) override;
 
     virtual TaskUpdateSourceFileData *clone() override {
         return new TaskUpdateSourceFileData(this);

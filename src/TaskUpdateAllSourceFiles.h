@@ -33,14 +33,20 @@ namespace ls {
 class TaskUpdateAllSourceFiles : public virtual jrpc::TaskBase {
 public:
     TaskUpdateAllSourceFiles(
-        jrpc::ITaskGroup            *group,
+        jrpc::ITaskQueue            *queue,
         Context                     *ctxt,
         SourceFileCollection        *src_files
     );
 
+    TaskUpdateAllSourceFiles(TaskUpdateAllSourceFiles *o);
+
     virtual ~TaskUpdateAllSourceFiles();
 
-    virtual jrpc::TaskStatus run() override;
+    virtual TaskUpdateAllSourceFiles *clone() override {
+        return new TaskUpdateAllSourceFiles(this);
+    }
+
+    virtual jrpc::ITask *run(jrpc::ITask *parent, bool initial) override;
 
 private:
     Context                         *m_ctxt;

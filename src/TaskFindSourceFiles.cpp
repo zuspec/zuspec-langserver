@@ -29,17 +29,17 @@ namespace ls {
 
 
 TaskFindSourceFiles::TaskFindSourceFiles(
-    jrpc::ITaskGroup                    *group,
+    jrpc::ITaskQueue                    *queue,
     lls::IFactory                       *factory,
     SourceFileCollection                *src_files,
     const std::vector<std::string>      &roots) :
-        TaskBase(group), m_factory(factory), m_src_files(src_files),
+        TaskBase(queue), m_factory(factory), m_src_files(src_files),
         m_roots(roots.begin(), roots.end()) {
     DEBUG_INIT("TaskFindSourceFiles", factory->getDebugMgr());
 }
 
 TaskFindSourceFiles::TaskFindSourceFiles(TaskFindSourceFiles *o) :
-    TaskBase(this), m_factory(o->m_factory), m_src_files(o->m_src_files),
+    TaskBase(o), m_factory(o->m_factory), m_src_files(o->m_src_files),
     m_roots(o->m_roots.begin(), o->m_roots.end()) {
 
 }
@@ -48,8 +48,9 @@ TaskFindSourceFiles::~TaskFindSourceFiles() {
 
 }
 
-jrpc::TaskStatus TaskFindSourceFiles::run() {
+jrpc::ITask *TaskFindSourceFiles::run(jrpc::ITask *parent, bool initial) {
     DEBUG_ENTER("run");
+    runEnter(parent, initial);
 
     SourceFileFinder finder(m_factory->getDebugMgr());
 
@@ -68,7 +69,7 @@ jrpc::TaskStatus TaskFindSourceFiles::run() {
 
     DEBUG_LEAVE("run");
 
-    return jrpc::TaskStatus::Done;
+    return runLeave(parent, initial);
 }
 
 TaskFindSourceFiles *TaskFindSourceFiles::clone() {

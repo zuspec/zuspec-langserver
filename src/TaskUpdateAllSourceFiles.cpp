@@ -26,19 +26,24 @@ namespace ls {
 
 
 TaskUpdateAllSourceFiles::TaskUpdateAllSourceFiles(
-    jrpc::ITaskGroup            *group,
+    jrpc::ITaskQueue            *queue,
     Context                     *ctxt,
     SourceFileCollection        *src_files) :
-        TaskBase(group), m_ctxt(ctxt), m_src_files(src_files) {
+        TaskBase(queue), m_ctxt(ctxt), m_src_files(src_files) {
 
 }
+
+TaskUpdateAllSourceFiles::TaskUpdateAllSourceFiles(TaskUpdateAllSourceFiles *o) :
+    TaskBase(o), m_ctxt(o->m_ctxt), m_src_files(o->m_src_files) { }
 
 TaskUpdateAllSourceFiles::~TaskUpdateAllSourceFiles() {
 
 }
 
-jrpc::TaskStatus TaskUpdateAllSourceFiles::run() {
+jrpc::ITask *TaskUpdateAllSourceFiles::run(jrpc::ITask *parent, bool initial) {
+    runEnter(parent, initial);
 
+    return runLeave(parent, initial);
 }
 
 }

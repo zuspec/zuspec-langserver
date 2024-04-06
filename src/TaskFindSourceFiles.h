@@ -33,7 +33,7 @@ class TaskFindSourceFiles : public virtual jrpc::TaskBase {
 public:
 
     TaskFindSourceFiles(
-        jrpc::ITaskGroup                *group,
+        jrpc::ITaskQueue                *queue,
         lls::IFactory                   *factory,
         SourceFileCollection            *src_files,
         const std::vector<std::string>  &roots);
@@ -42,7 +42,7 @@ public:
 
     virtual ~TaskFindSourceFiles();
 
-    virtual jrpc::TaskStatus run() override;
+    virtual jrpc::ITask *run(jrpc::ITask *parent, bool initial) override;
 
     virtual TaskFindSourceFiles *clone() override;
 

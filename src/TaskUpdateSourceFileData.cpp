@@ -32,10 +32,10 @@ namespace ls {
 
 
 TaskUpdateSourceFileData::TaskUpdateSourceFileData(
-    jrpc::ITaskGroup                *group,
+    jrpc::ITaskQueue                *queue,
     Context                         *ctxt,
     SourceFileCollection            *files,
-    SourceFileData                  *file) : TaskBase(group),
+    SourceFileData                  *file) : TaskBase(queue),
         m_ctxt(ctxt), m_files(files), m_file(file) {
     DEBUG_INIT("TaskUpdateSourceFileData", ctxt->getDebugMgr());
     memset(m_has, 0, sizeof(m_has));
@@ -43,7 +43,7 @@ TaskUpdateSourceFileData::TaskUpdateSourceFileData(
 }
 
 TaskUpdateSourceFileData::TaskUpdateSourceFileData(TaskUpdateSourceFileData *o) :
-    TaskBase(this), m_ctxt(o->m_ctxt), m_files(o->m_files),
+    TaskBase(o), m_ctxt(o->m_ctxt), m_files(o->m_files),
     m_file(o->m_file) {
 
 };
@@ -52,8 +52,9 @@ TaskUpdateSourceFileData::~TaskUpdateSourceFileData() {
 
 }
 
-jrpc::TaskStatus TaskUpdateSourceFileData::run() {
+jrpc::ITask *TaskUpdateSourceFileData::run(jrpc::ITask *parent, bool initial) {
     DEBUG_ENTER("run");
+    runEnter(parent, initial);
     zsp::ast::IGlobalScopeUP global(
         m_ctxt->getAstFactory()->mkGlobalScope(m_file->getId()));
     zsp::parser::IAstBuilder *builder = m_ctxt->allocAstBuilder();
@@ -113,7 +114,7 @@ jrpc::TaskStatus TaskUpdateSourceFileData::run() {
     m_ctxt->freeAstBuilder(builder);
 
     DEBUG_LEAVE("run");
-    return jrpc::TaskStatus::Done;
+    return runLeave(parent, initial);
 }
 
 void TaskUpdateSourceFileData::marker(const zsp::parser::IMarker *m) {

@@ -19,6 +19,7 @@
  *     Author:
  */
 #include "dmgr/impl/DebugMacros.h"
+#include "jrpc/impl/TaskLambda.h"
 #include "lls/IDocumentSymbolResponse.h"
 #include "Server.h"
 #include "TaskBuildDocumentSymbols.h"
@@ -88,22 +89,24 @@ lls::IInitializeResultUP Server::initialize(lls::IInitializeParamsUP &params) {
     capabilites->setDocumentSymbolProvider(true);
 
     // Setup a job to find .pss files
-    std::vector<std::string> roots;
     DEBUG("Root path: %s", params->getRootPath().c_str());
 
-    roots.push_back(params->getRootPath());
+    m_roots.push_back(params->getRootPath());
     for (std::vector<std::string>::const_iterator
         it=params->getWorkspaceFolders().begin();
         it!=params->getWorkspaceFolders().end(); it++) {
         DEBUG("Workspace Folder: %s", it->c_str());
-        roots.push_back(*it);
+        m_roots.push_back(*it);
     }
 
-    m_queue->addTask(new TaskFindSourceFiles(
-        m_queue->mkTaskGroup(),
-        m_factory, 
-        m_source_files.get(),
-        roots), true);
+    m_queue->addTask(new jrpc::TaskLambda(m_queue.get(),
+        [&](jrpc::ITask *p, bool i) -> jrpc::ITask * {
+            TaskFindSourceFiles(
+                m_queue.get(),
+                m_factory, 
+                m_source_files.get(),
+                m_roots).run(0, true);
+        }), true);
 
     lls::IInitializeResultUP ret(m_factory->mkInitializeResult(
         capabilites,
@@ -145,11 +148,16 @@ void Server::didOpen(lls::IDidOpenTextDocumentParamsUP &params) {
     DEBUG("  Set Live Content: %d", src->getLiveContent().size());
 
     // Now, queue this file for parsing
-    m_queue->addTaskPreempt(new TaskUpdateSourceFileData(
-        m_queue->mkTaskGroup(),
-        m_ctxt.get(),
-        m_source_files.get(),
-        src), true);
+    m_queue->addTask(new jrpc::TaskLambda(m_queue.get(),
+        [src,this](jrpc::ITask *p, bool i) -> jrpc::ITask * {
+
+            TaskUpdateSourceFileData(
+                m_queue.get(),
+                m_ctxt.get(),
+                m_source_files.get(),
+                src).run(0, true);
+        }), true);
+
     DEBUG_LEAVE("didOpen");
 }
 
@@ -179,11 +187,15 @@ void Server::didChange(lls::IDidChangeTextDocumentParamsUP &params) {
     // parsed *and* any updates of non-live content completing
 
     // Now, queue this file for parsing
-    m_queue->addTask(new TaskUpdateSourceFileData(
-        m_queue->mkTaskGroup(),
-        m_ctxt.get(),
-        m_source_files.get(),
-        src), true);
+    m_queue->addTask(new jrpc::TaskLambda(m_queue.get(), 
+        [&](jrpc::ITask *p, bool i) -> jrpc::ITask * {
+            TaskUpdateSourceFileData(
+                m_queue.get(),
+                m_ctxt.get(),
+                m_source_files.get(),
+                src).run(0, true); 
+            return 0;
+        }), true);
 }
 
 void Server::didClose(lls::IDidCloseTextDocumentParamsUP &params) {
@@ -200,10 +212,13 @@ void Server::didClose(lls::IDidCloseTextDocumentParamsUP &params) {
     src->setLiveContent("");
 
     // Now, queue this file for parsing
-    jrpc::TaskStatus ret = TaskUpdateSourceFileData(
-        m_queue->mkTaskGroup(),
-        m_ctxt.get(),
-        m_source_files.get(), src).run();
+    m_queue->addTask(new jrpc::TaskLambda(m_queue.get(),
+        [&](jrpc::ITask *p, bool i) -> jrpc::ITask * {
+            TaskUpdateSourceFileData(
+                m_queue.get(),
+                m_ctxt.get(),
+                m_source_files.get(), src).run(0, true);
+        }), true);
 
     DEBUG_LEAVE("didClose");
 }
