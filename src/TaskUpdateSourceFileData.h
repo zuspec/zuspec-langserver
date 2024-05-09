@@ -21,6 +21,7 @@
 #pragma once
 #include "jrpc/ITask.h"
 #include "jrpc/impl/TaskBase.h"
+#include "jrpc/impl/LockRwValid.h"
 #include "lls/IClient.h"
 #include "lls/IFactory.h"
 #include "zsp/ast/IFactory.h"
@@ -34,15 +35,15 @@ namespace zsp {
 namespace ls {
 
 
-
+/**
+ * @brief Parses and updates a single file in the source collection
+ */
 class TaskUpdateSourceFileData :
     public virtual zsp::parser::IMarkerListener,
     public virtual jrpc::TaskBase {
 public:
     TaskUpdateSourceFileData(
-        jrpc::ITaskQueue            *queue,
         Context                     *ctxt,
-        SourceFileCollection        *files,
         SourceFileData              *file);
 
     TaskUpdateSourceFileData(TaskUpdateSourceFileData *o);
@@ -62,7 +63,6 @@ public:
 private:
     static dmgr::IDebug                 *m_dbg;
     Context                             *m_ctxt;
-    SourceFileCollection                *m_files;
     SourceFileData                      *m_file;
     int                                 m_has[(int)zsp::parser::MarkerSeverityE::NumLevels];
     std::vector<lls::IDiagnosticUP>     m_diagnostics;

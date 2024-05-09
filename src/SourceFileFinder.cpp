@@ -39,16 +39,13 @@ SourceFileFinder::~SourceFileFinder() {
 
 }
 
-void SourceFileFinder::find(
-    SourceFileCollection        *collection,
-    const std::string           &root) {
+void SourceFileFinder::find(const std::string &root) {
     DEBUG_ENTER("find: %s", root.c_str());
-    m_collection = collection;
-    find(root);
+    _find(root);
     DEBUG_LEAVE("find: %s", root.c_str());
 }
 
-void SourceFileFinder::find(const std::string &path) {
+void SourceFileFinder::_find(const std::string &path) {
     DEBUG_ENTER("find(path): %s", path.c_str());
     DIR *dir;
     struct stat stat_path, stat_entry;
@@ -87,11 +84,16 @@ void SourceFileFinder::find(const std::string &path) {
 
                 std::string uri = "file://" + fullpath;
 
-                int64_t timestamp = stat_path.st_mtim.tv_sec * 1000;
-                timestamp += stat_path.st_mtim.tv_nsec / 1000;
+                // int64_t timestamp = stat_path.st_mtim.tv_sec * 1000;
+                // timestamp += stat_path.st_mtim.tv_nsec / 1000;
+                DEBUG("Found file w/URI %s", uri.c_str());
 
-                SourceFileDataUP file(new SourceFileData(uri, timestamp));
-                m_collection->addFile(file);
+                m_files.push_back(uri);
+/*
+                if (!m_src_files || !m_src_files->hasFile(uri)) {
+                    m_files.push_back(uri);
+                }
+ */
             }
         } else if (S_ISDIR(stat_path.st_mode) != 0) {
             find(fullpath);

@@ -32,7 +32,7 @@ Context::Context(
         lls::IClient            *client,
         zsp::parser::IFactory   *zspp_f) :
     m_dmgr(dmgr), m_queue(queue), m_lls_f(lls_f), m_client(client),
-    m_zspp_f(zspp_f) {
+    m_zspp_f(zspp_f), m_src_c(new SourceFileCollection(dmgr, queue)) {
 
 }
 

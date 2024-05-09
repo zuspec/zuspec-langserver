@@ -1,5 +1,5 @@
 /**
- * SourceFileFinder.h
+ * TestWorkspaceStartup.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -19,36 +19,21 @@
  *     Author: 
  */
 #pragma once
-#include "dmgr/IDebugMgr.h"
-#include "SourceFileCollection.h"
+#include "TestTaskBase.h"
 
 namespace zsp {
 namespace ls {
 
-class SourceFileFinder;
-using SourceFileFinderUP=std::unique_ptr<SourceFileFinder>;
-class SourceFileFinder {
+
+class TestWorkspaceStartup : public TestTaskBase {
 public:
-    SourceFileFinder(dmgr::IDebugMgr *dmgr);
+    TestWorkspaceStartup();
 
-    virtual ~SourceFileFinder();
-
-    void find(const std::string       &root);
-
-    const std::vector<std::string> &getFiles() const {
-        return m_files;
-    }
-
-protected:
-
-    void _find(const std::string &dir);
-
-private:
-    static dmgr::IDebug         *m_dbg;
-    std::vector<std::string>    m_files;
+    virtual ~TestWorkspaceStartup();
 
 };
 
 }
 }
+
 

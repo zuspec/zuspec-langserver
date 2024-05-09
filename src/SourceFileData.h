@@ -22,8 +22,10 @@
 #include <stdint.h>
 #include <memory>
 #include <string>
+#include "jrpc/impl/LockRw.h"
 #include "zsp/ast/IGlobalScope.h"
-#include "zsp/ast/ISymbolScope.h"
+#include "zsp/ast/IRootSymbolScope.h"
+#include "zsp/parser/IMarker.h"
 
 namespace zsp {
 namespace ls {
@@ -91,7 +93,7 @@ public:
         return m_fileSymtab.get();
     }
 
-    virtual void setFileSymtab(zsp::ast::ISymbolScopeUP &symt) {
+    virtual void setFileSymtab(zsp::ast::IRootSymbolScopeUP &symt) {
         m_fileSymtab = std::move(symt);
     }
 
@@ -104,15 +106,20 @@ public:
     }
 
 private:
-    std::string                 m_uri;
-    int32_t                     m_id;
-    int64_t                     m_timestamp;
-    bool                        m_isOpen;
-    std::string                 m_liveContent;
-    zsp::ast::IGlobalScopeUP    m_staticAst;
-    zsp::ast::IGlobalScopeUP    m_liveAst;
-    zsp::ast::ISymbolScopeUP    m_fileSymtab;
-    bool                        m_haveMarkers;
+    std::string                             m_uri;
+    int32_t                                 m_id;
+    int64_t                                 m_timestamp;
+    bool                                    m_isOpen;
+    std::string                             m_liveContent;
+    zsp::ast::IGlobalScopeUP                m_staticAst;
+    zsp::ast::IGlobalScopeUP                m_liveAst;
+    zsp::ast::IRootSymbolScopeUP            m_fileSymtab;
+    int32_t                                 m_fileSymtabVersion;
+    bool                                    m_haveMarkers;
+    std::vector<zsp::parser::IMarkerUP>     m_syntaxMarkers;
+    std::vector<zsp::parser::IMarkerUP>     m_linkMarkers;
+    std::vector<zsp::parser::IMarkerUP>     m_semanticMarkers;
+    jrpc::LockRw                            m_lock;
 
 };
 

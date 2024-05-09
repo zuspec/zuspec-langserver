@@ -1,5 +1,5 @@
-/**
- * SourceFileFinder.h
+/*
+ * TestTaskBase.cpp
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -16,39 +16,41 @@
  * limitations under the License.
  *
  * Created on:
- *     Author: 
+ *     Author:
  */
-#pragma once
-#include "dmgr/IDebugMgr.h"
-#include "SourceFileCollection.h"
+#include "TestTaskBase.h"
+
 
 namespace zsp {
 namespace ls {
 
-class SourceFileFinder;
-using SourceFileFinderUP=std::unique_ptr<SourceFileFinder>;
-class SourceFileFinder {
-public:
-    SourceFileFinder(dmgr::IDebugMgr *dmgr);
 
-    virtual ~SourceFileFinder();
+TestTaskBase::TestTaskBase() {
 
-    void find(const std::string       &root);
+}
 
-    const std::vector<std::string> &getFiles() const {
-        return m_files;
-    }
+TestTaskBase::~TestTaskBase() {
 
-protected:
+}
 
-    void _find(const std::string &dir);
+void TestTaskBase::SetUp() {
+    TestBase::SetUp();
+    m_queue = jrpc::ITaskQueueUP(m_jrpc_factory->mkTaskQueue(0));
+    fprintf(stdout, "queue: %p\n", m_queue.get());
+    fflush(stdout);
+    m_ctxt = ContextUP(new Context(
+        m_dmgr,
+        m_queue.get(),
+        m_lls_factory,
+        &m_client,
+        m_zsp_factory
+    ));
+}
 
-private:
-    static dmgr::IDebug         *m_dbg;
-    std::vector<std::string>    m_files;
+void TestTaskBase::TearDown() {
+    TestBase::TearDown();
 
-};
+}
 
 }
 }
-

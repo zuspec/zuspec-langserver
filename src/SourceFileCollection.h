@@ -24,11 +24,13 @@
 #include <vector>
 #include "dmgr/IDebugMgr.h"
 #include "jrpc/ITaskQueue.h"
-#include "Context.h"
+#include "jrpc/impl/LockRwValid.h"
 #include "SourceFileData.h"
 
 namespace zsp {
 namespace ls {
+
+class Context;
 
 class SourceFileCollection;
 using SourceFileCollectionUP=std::unique_ptr<SourceFileCollection>;
@@ -46,23 +48,37 @@ public:
 
     virtual SourceFileData *getFile(const std::string &uri);
 
+    dmgr::IDebugMgr *getDebugMgr() const { return m_dmgr; }
+
     virtual const std::vector<SourceFileDataUP> &getFiles() const {
         return m_file_l;
     }
+
+    virtual bool tryLockFile(
+        const std::string           &uri,
+        bool                        write);
 
     virtual void updateLiveContent(
         Context                     *ctxt,
         const std::string           &uri,
         const std::string           &liveContent);
 
+    jrpc::LockRwValid *getLock() {
+        return &m_lock;
+    }
+
 private:
     static dmgr::IDebug                     *m_dbg;
     dmgr::IDebugMgr                         *m_dmgr;
     jrpc::ITaskQueue                        *m_queue;
-    std::mutex                              m_mutex;
+    jrpc::LockRwValid                       m_lock;
     std::map<std::string, jrpc::ITask *>    m_live_update_m;
     std::map<std::string,int32_t>           m_uri_id_m;
+
     std::vector<SourceFileDataUP>           m_file_l;
+
+    // Sequence id associated with updates to static AST
+    int32_t                                 m_staticAstVersion;
 
 };
 

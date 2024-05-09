@@ -27,6 +27,8 @@
 #include "zsp/ast/IFactory.h"
 #include "zsp/parser/IAstBuilder.h"
 #include "zsp/parser/IFactory.h"
+#include "SourceFileCollection.h"
+
 
 namespace zsp {
 namespace ls {
@@ -40,8 +42,7 @@ public:
         jrpc::ITaskQueue        *queue,
         lls::IFactory           *lls_f,
         lls::IClient            *client,
-        zsp::parser::IFactory   *zspp_f
-    );
+        zsp::parser::IFactory   *zspp_f);
 
     virtual ~Context();
 
@@ -65,6 +66,14 @@ public:
         m_client = client;
     }
 
+    jrpc::ITaskQueue *getQueue() {
+        return m_queue;
+    }
+
+    SourceFileCollection *getSourceFiles() {
+        return m_src_c.get();
+    }
+
     virtual zsp::parser::IAstBuilder *allocAstBuilder();
 
     virtual void freeAstBuilder(zsp::parser::IAstBuilder *builder);
@@ -77,6 +86,7 @@ private:
     zsp::parser::IFactory                       *m_zspp_f;
     std::vector<zsp::parser::IAstBuilderUP>     m_ast_builders;
     std::mutex                                  m_mutex;
+    SourceFileCollectionUP                      m_src_c;
 
 };
 

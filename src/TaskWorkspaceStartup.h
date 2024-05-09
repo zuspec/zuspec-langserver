@@ -1,5 +1,5 @@
 /**
- * TaskFindSourceFiles.h
+ * TaskWorkspaceStartup.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -19,41 +19,37 @@
  *     Author: 
  */
 #pragma once
-#include <string>
 #include <vector>
+#include <string>
 #include "jrpc/impl/TaskBase.h"
-#include "lls/IFactory.h"
 #include "SourceFileCollection.h"
 
 namespace zsp {
 namespace ls {
 
 
-class TaskFindSourceFiles : public virtual jrpc::TaskBase {
+
+class TaskWorkspaceStartup : public jrpc::TaskBase {
 public:
+    TaskWorkspaceStartup(
+        Context                             *ctxt,
+        const std::vector<std::string>      &roots);
 
-    TaskFindSourceFiles(
-        dmgr::IDebugMgr                 *dmgr,
-        jrpc::ITaskQueue                *queue,
-        const std::vector<std::string>  &roots);
+    virtual ~TaskWorkspaceStartup();
 
-    TaskFindSourceFiles(TaskFindSourceFiles *o);
+    TaskWorkspaceStartup(TaskWorkspaceStartup *o) : 
+        jrpc::TaskBase(o), m_idx(o->m_idx), m_ctxt(o->m_ctxt),
+        m_roots(o->m_roots.begin(), o->m_roots.end()) { }
 
-    virtual ~TaskFindSourceFiles();
+    virtual ITask *clone() { return new TaskWorkspaceStartup(this); }
 
     virtual jrpc::ITask *run(jrpc::ITask *parent, bool initial) override;
 
-    virtual TaskFindSourceFiles *clone() override;
-
-    static std::vector<std::string> *getResult(const jrpc::TaskResult &res) {
-        return res.val.p ? reinterpret_cast<std::vector<std::string> *>(res.val.p) : 0;
-    }
-
 private:
-    static dmgr::IDebug                 *m_dbg;
-    dmgr::IDebugMgr                     *m_dmgr;
-    std::vector<std::string>            m_roots;
-    std::vector<std::string>            m_src_files;
+    static dmgr::IDebug                     *m_dbg;
+    Context                                 *m_ctxt;
+    int32_t                                 m_idx;
+    std::vector<std::string>                m_roots;
 
 };
 

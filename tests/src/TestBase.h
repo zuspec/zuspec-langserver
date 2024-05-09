@@ -72,10 +72,12 @@ protected:
     bool createTree(const std::map<std::string,std::string> &files);
 
 protected:
-    std::string         m_testdir;
-    dmgr::IDebugMgr     *m_dmgr;
-    jrpc::IFactory      *m_jrpc_factory;
-    lls::IFactory       *m_lls_factory;
+    std::string                 m_testdir;
+    dmgr::IDebugMgr             *m_dmgr;
+    jrpc::IFactory              *m_jrpc_factory;
+    lls::IFactory               *m_lls_factory;
+    zsp::parser::IFactory       *m_zsp_factory;
+    bool                        m_rm_testdir;
 
 };
 

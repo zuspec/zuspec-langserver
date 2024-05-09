@@ -63,7 +63,6 @@ protected:
     static dmgr::IDebug         *m_dbg;
     jrpc::ITaskQueueUP          m_queue;
     ContextUP                   m_ctxt;
-    SourceFileCollectionUP      m_source_files;
     std::vector<std::string>    m_roots;
 
 };

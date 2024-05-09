@@ -25,6 +25,7 @@
 #include "TaskBuildDocumentSymbols.h"
 #include "TaskUpdateSourceFileData.h"
 #include "TaskFindSourceFiles.h"
+#include "TaskWorkspaceStartup.h"
 
 
 namespace zsp {
@@ -42,10 +43,7 @@ Server::Server(
                 m_queue.get(),
                 lls_factory, 
                 m_client, 
-                parser_factory)),
-            m_source_files(new SourceFileCollection(
-                lls_factory->getDebugMgr(),
-                m_queue.get())) {
+                parser_factory)) {
     DEBUG_INIT("zsp::ls::Server", m_ctxt->getDebugMgr());
 }
 
@@ -101,11 +99,7 @@ lls::IInitializeResultUP Server::initialize(lls::IInitializeParamsUP &params) {
 
     m_queue->addTask(new jrpc::TaskLambda(m_queue.get(),
         [&](jrpc::ITask *p, bool i) -> jrpc::ITask * {
-            TaskFindSourceFiles(
-                m_queue.get(),
-                m_factory, 
-                m_source_files.get(),
-                m_roots).run(0, true);
+            TaskWorkspaceStartup(m_ctxt.get(), m_roots).run(0, true);
         }), true);
 
     lls::IInitializeResultUP ret(m_factory->mkInitializeResult(
@@ -129,9 +123,9 @@ void Server::didOpen(lls::IDidOpenTextDocumentParamsUP &params) {
     //   - Send response
     //   - Queue any marker-propagation tasks
 
-    if (m_source_files->hasFile(params->getTextDocument()->getUri())) {
+    if (m_ctxt->getSourceFiles()->hasFile(params->getTextDocument()->getUri())) {
         DEBUG("File already found");
-        src = m_source_files->getFile(params->getTextDocument()->getUri());
+        src = m_ctxt->getSourceFiles()->getFile(params->getTextDocument()->getUri());
     } else {
         // This file wasn't found during discovery, so we add it to the
         // collection that we're managing now.
@@ -141,20 +135,22 @@ void Server::didOpen(lls::IDidOpenTextDocumentParamsUP &params) {
             params->getTextDocument()->getUri(),
             -1);
         SourceFileDataUP src_up(src);
-        m_source_files->addFile(src_up);
+        m_ctxt->getSourceFiles()->addFile(src_up);
     }
     DEBUG("Set Live Content: %d", params->getTextDocument()->getText().size());
     src->setLiveContent(params->getTextDocument()->getText());
     DEBUG("  Set Live Content: %d", src->getLiveContent().size());
+
+    // What we want to do:
+    // - Try to lock the file for writing
+    // - Launch an Update task, indicating whether we have a lock
 
     // Now, queue this file for parsing
     m_queue->addTask(new jrpc::TaskLambda(m_queue.get(),
         [src,this](jrpc::ITask *p, bool i) -> jrpc::ITask * {
 
             TaskUpdateSourceFileData(
-                m_queue.get(),
                 m_ctxt.get(),
-                m_source_files.get(),
                 src).run(0, true);
         }), true);
 
@@ -164,13 +160,13 @@ void Server::didOpen(lls::IDidOpenTextDocumentParamsUP &params) {
 void Server::didChange(lls::IDidChangeTextDocumentParamsUP &params) {
     SourceFileData *src;
 
-    if (!m_source_files->hasFile(params->getTextDocument()->getUri())) {
+    if (!m_ctxt->getSourceFiles()->hasFile(params->getTextDocument()->getUri())) {
         // ERROR
         DEBUG("Error: attempting to change an unopened file");
         return;
     }
 
-    src = m_source_files->getFile(params->getTextDocument()->getUri());
+    src = m_ctxt->getSourceFiles()->getFile(params->getTextDocument()->getUri());
 
     for (std::vector<lls::ITextDocumentContentChangeEventUP>::const_iterator
         it=params->getChanges().begin();
@@ -186,42 +182,45 @@ void Server::didChange(lls::IDidChangeTextDocumentParamsUP &params) {
     // Link updates depend on both the 'live' content being
     // parsed *and* any updates of non-live content completing
 
-    // Now, queue this file for parsing
-    m_queue->addTask(new jrpc::TaskLambda(m_queue.get(), 
-        [&](jrpc::ITask *p, bool i) -> jrpc::ITask * {
-            TaskUpdateSourceFileData(
-                m_queue.get(),
-                m_ctxt.get(),
-                m_source_files.get(),
-                src).run(0, true); 
-            return 0;
-        }), true);
+    TaskUpdateSourceFileData(m_ctxt.get(), src).run(0, true); 
 }
 
 void Server::didClose(lls::IDidCloseTextDocumentParamsUP &params) {
     DEBUG_ENTER("didClose");
     SourceFileData *src;
 
-    if (!m_source_files->hasFile(params->getTextDocument()->getUri())) {
+    if (!m_ctxt->getSourceFiles()->hasFile(params->getTextDocument()->getUri())) {
         // ERROR
         return;
     }
 
-    src = m_source_files->getFile(params->getTextDocument()->getUri());
+    src = m_ctxt->getSourceFiles()->getFile(params->getTextDocument()->getUri());
     // Revert to being a closed file
     src->setLiveContent("");
 
     // Now, queue this file for parsing
     m_queue->addTask(new jrpc::TaskLambda(m_queue.get(),
         [&](jrpc::ITask *p, bool i) -> jrpc::ITask * {
-            TaskUpdateSourceFileData(
-                m_queue.get(),
-                m_ctxt.get(),
-                m_source_files.get(), src).run(0, true);
+            TaskUpdateSourceFileData(m_ctxt.get(), src).run(0, true);
         }), true);
 
     DEBUG_LEAVE("didClose");
 }
+
+// Hover is:
+//
+// - Semaphore -- holds up-to-date status
+// - LockRW    -- tracks who can read/write the resources
+//
+// 
+// - Need the linked state of this file to be up-to-date, and have read-lock that state
+//   - Need the state of the filelist to be up-to-date
+//     - Will hold a read-lock on the list once any update is complete
+//   - Need the parse state of all files to be up-to-date
+//     - Must acquire a write lock to the 
+//   - Need the (otf) parse state of this file to be up-to-date
+//   - Need the link state of this file to be up-to-date
+//   -> Result is the link state of this file and a read-lock on it
 
 lls::IDocumentSymbolResponseUP Server::documentSymbols(
     const std::string               &id,
@@ -243,8 +242,8 @@ lls::IDocumentSymbolResponseUP Server::documentSymbols(
     // Finally, lock file m,.
 
     lls::IDocumentSymbolResponseUP response;
-    if (m_source_files->hasFile(params->getTextDocument()->getUri())) {
-        src = m_source_files->getFile(params->getTextDocument()->getUri());
+    if (m_ctxt->getSourceFiles()->hasFile(params->getTextDocument()->getUri())) {
+        src = m_ctxt->getSourceFiles()->getFile(params->getTextDocument()->getUri());
         global = (src->getLiveAst())?src->getLiveAst():src->getStaticAst();
     }
 

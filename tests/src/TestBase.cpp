@@ -65,6 +65,12 @@ void TestBase::SetUp() {
     m_lls_factory = lls_getFactory();
     m_lls_factory->init(m_jrpc_factory);
 
+    zsp::ast::IFactory *zsp_ast_f = ast_getFactory();
+    m_zsp_factory = zsp_parser_getFactory();
+    m_zsp_factory->init(m_dmgr, zsp_ast_f);
+
+    m_rm_testdir = true;
+
     // Create the run directory
     std::string testname = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     testname += ".";
@@ -82,7 +88,7 @@ void TestBase::SetUp() {
 }
 
 void TestBase::TearDown() {
-    if (::testing::Test::HasFailure()) {
+    if (::testing::Test::HasFailure() || !m_rm_testdir) {
         fprintf(stdout, "Note: preserving test directory %s\n", m_testdir.c_str());
     } else {
         fprintf(stdout, "Note: removing test directory %s\n", m_testdir.c_str());

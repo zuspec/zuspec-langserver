@@ -55,6 +55,14 @@ SourceFileData *SourceFileCollection::getFile(const std::string &uri) {
     }
 }
 
+bool SourceFileCollection::tryLockFile(
+        const std::string           &uri,
+        bool                        write) {
+    DEBUG_ENTER("tryLockFile");
+
+    DEBUG_LEAVE("tryLockFile");
+}
+
 void SourceFileCollection::updateLiveContent(
         Context                     *ctxt,
         const std::string           &uri,
