@@ -18,6 +18,7 @@
  * Created on:
  *     Author:
  */
+#include <string.h>
 #include "SourceFileData.h"
 
 namespace zsp {
@@ -29,11 +30,33 @@ SourceFileData::SourceFileData(
     int64_t                 timestamp) :
         m_uri(uri), m_id(-1), m_timestamp(timestamp),
         m_haveMarkers(false) {
-
+    memset(m_has, 0, sizeof(m_has));
 }
 
 SourceFileData::~SourceFileData() {
 
+}
+
+void SourceFileData::clearMarkers() {
+    m_syntaxMarkers.clear();
+    m_linkMarkers.clear();
+    m_semanticMarkers.clear();
+    memset(m_has, 0, sizeof(m_has));
+}
+
+void SourceFileData::addSyntaxMarker(zsp::parser::IMarkerUP &marker) {
+    m_has[(int)marker->severity()]++;
+    m_syntaxMarkers.push_back(std::move(marker));
+}
+
+void SourceFileData::addLinkMarker(zsp::parser::IMarkerUP &marker) {
+    m_has[(int)marker->severity()]++;
+    m_linkMarkers.push_back(std::move(marker));
+}
+
+void SourceFileData::addSemanticMarker(zsp::parser::IMarkerUP &marker) {
+    m_has[(int)marker->severity()]++;
+    m_semanticMarkers.push_back(std::move(marker));
 }
 
 }

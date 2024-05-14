@@ -24,6 +24,8 @@
 #include "jrpc/impl/TaskRunTasklist.h"
 #include "Context.h"
 #include "TaskFindSourceFiles.h"
+#include "TaskLinkAst.h"
+#include "TaskPublishDiagnostics.h"
 #include "TaskWorkspaceStartup.h"
 #include "TaskUpdateSourceFileData.h"
 
@@ -53,7 +55,12 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
             DEBUG("Locking the source collection");
             // First, lock the source collection so we can update the filelist
             m_idx = 1;
+
+            // Yield this task after startup
             if (!jrpc::TaskLockWrite(m_queue, m_ctxt->getSourceFiles()->getLock()).run(this, true)->done()) {
+                break;
+            } else {
+                setFlags(jrpc::TaskFlags::Yield);
                 break;
             }
         }
@@ -67,13 +74,13 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
         case 2: {  // Have source files. Now, need to update source files
             m_idx = 3;
             DEBUG("Parse source files");
-            std::vector<std::string> *files = TaskFindSourceFiles::getResult(getResult());
+            m_files = std::unique_ptr<std::vector<std::string>>(TaskFindSourceFiles::getResult(getResult()));
 
             // Start and queue individual jobs to process files
             std::vector<jrpc::ITask *> tasks;
             for (std::vector<std::string>::const_iterator
-                f_it=files->begin();
-                f_it!=files->end(); f_it++) {
+                f_it=m_files->begin();
+                f_it!=m_files->end(); f_it++) {
                 if (!m_ctxt->getSourceFiles()->hasFile(*f_it)) {
                     SourceFileDataUP file(new SourceFileData(*f_it, 0));
                     m_ctxt->getSourceFiles()->addFile(file);
@@ -95,11 +102,38 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
         }
 
         case 3: { // If no parse errors, create a linked representation
+            m_idx = 4;
 
+            bool have_errors = false;
+            for (std::vector<std::string>::const_iterator
+                f_it=m_files->begin();
+                f_it!=m_files->end(); f_it++) {
+                SourceFileData *file = m_ctxt->getSourceFiles()->getFile(*f_it);
+                if ((have_errors |= file->hasSeverity(zsp::parser::MarkerSeverityE::Error))) {
+                    break;
+                }
+            }
+
+            if (!have_errors) {
+                DEBUG("No errors -- build linked index");
+                std::vector<std::string> *fp = m_files.get();
+                TaskLinkAst(m_ctxt, *fp).run(this, true);
+                // TODO: link
+            } else {
+                DEBUG("Have errors, so not productive to build an index");
+            }
         }
 
         case 4: { // Report any errors
+            m_idx = 5;
 
+            for (std::vector<std::string>::const_iterator
+                f_it=m_files->begin();
+                f_it!=m_files->end(); f_it++) {
+                DEBUG("Publishing diagnostics for %s", f_it->c_str());
+                SourceFileData *file = m_ctxt->getSourceFiles()->getFile(*f_it);
+                TaskPublishDiagnostics(m_ctxt, file).run(0, true);
+            }
         }
 
         case 5: {

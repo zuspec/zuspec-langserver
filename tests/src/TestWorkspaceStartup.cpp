@@ -79,6 +79,17 @@ TEST_F(TestWorkspaceStartup, smoke) {
 
     ASSERT_FALSE(pend);
 
+    // Confirm that some diagnostics were sent
+    ASSERT_EQ(m_client.getDiagnostics().size(), 2);
+
+    uint32_t n_diagnostics = 0;
+    for (std::vector<lls::IPublishDiagnosticsParamsUP>::const_iterator
+        it=m_client.getDiagnostics().begin();
+        it!=m_client.getDiagnostics().end(); it++) {
+        n_diagnostics += (*it)->getDiagnostics().size();
+    }
+    ASSERT_EQ(n_diagnostics, 0);
+
     // Check post-conditions
     // - Files discovered
     // - Index state

@@ -105,6 +105,30 @@ public:
         m_haveMarkers = h;
     }
 
+    virtual void clearMarkers();
+
+    virtual void addSyntaxMarker(zsp::parser::IMarkerUP &marker);
+
+    virtual const std::vector<zsp::parser::IMarkerUP> & getSyntaxMarkers() const {
+        return m_syntaxMarkers;
+    }
+
+    virtual void addLinkMarker(zsp::parser::IMarkerUP &marker);
+
+    virtual const std::vector<zsp::parser::IMarkerUP> & getLinkMarkers() const {
+        return m_linkMarkers;
+    }
+
+    virtual void addSemanticMarker(zsp::parser::IMarkerUP &marker);
+
+    virtual const std::vector<zsp::parser::IMarkerUP> & getSemanticMarkers() const {
+        return m_semanticMarkers;
+    }
+
+    bool hasSeverity(zsp::parser::MarkerSeverityE s) {
+        return m_has[(int)s];
+    }
+
 private:
     std::string                             m_uri;
     int32_t                                 m_id;
@@ -116,9 +140,11 @@ private:
     zsp::ast::IRootSymbolScopeUP            m_fileSymtab;
     int32_t                                 m_fileSymtabVersion;
     bool                                    m_haveMarkers;
+    // All markers are relative to the 'static' (on-disk) file view
     std::vector<zsp::parser::IMarkerUP>     m_syntaxMarkers;
     std::vector<zsp::parser::IMarkerUP>     m_linkMarkers;
     std::vector<zsp::parser::IMarkerUP>     m_semanticMarkers;
+    int                                     m_has[(int)zsp::parser::MarkerSeverityE::NumLevels];
     jrpc::LockRw                            m_lock;
 
 };

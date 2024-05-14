@@ -1,5 +1,5 @@
 /*
- * TestTaskBase.cpp
+ * TaskDidChange.cpp
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -18,38 +18,18 @@
  * Created on:
  *     Author:
  */
-#include "TestTaskBase.h"
+#include "TaskDidChange.h"
 
 
 namespace zsp {
 namespace ls {
 
 
-TestTaskBase::TestTaskBase() {
+TaskDidChange::TaskDidChange() {
 
 }
 
-TestTaskBase::~TestTaskBase() {
-
-}
-
-void TestTaskBase::SetUp() {
-    TestBase::SetUp();
-    m_queue = jrpc::ITaskQueueUP(m_jrpc_factory->mkTaskQueue(0));
-    fprintf(stdout, "queue: %p\n", m_queue.get());
-    fflush(stdout);
-    m_client.init(m_dmgr);
-    m_ctxt = ContextUP(new Context(
-        m_dmgr,
-        m_queue.get(),
-        m_lls_factory,
-        &m_client,
-        m_zsp_factory
-    ));
-}
-
-void TestTaskBase::TearDown() {
-    TestBase::TearDown();
+TaskDidChange::~TaskDidChange() {
 
 }
 

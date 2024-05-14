@@ -1,5 +1,5 @@
 /**
- * TaskUpdateSourceFileData.h
+ * TaskLinkAst.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -19,42 +19,33 @@
  *     Author: 
  */
 #pragma once
-#include "jrpc/ITask.h"
-#include "jrpc/impl/TaskBase.h"
-#include "jrpc/impl/LockRwValid.h"
-#include "lls/IClient.h"
-#include "lls/IFactory.h"
-#include "zsp/ast/IFactory.h"
-#include "zsp/parser/IAstBuilder.h"
-#include "zsp/parser/IMarkerListener.h"
 #include "Context.h"
-#include "SourceFileCollection.h"
-#include "SourceFileData.h"
+#include "jrpc/impl/TaskBase.h"
+#include "zsp/parser/IMarkerListener.h"
+
 
 namespace zsp {
 namespace ls {
 
 
-/**
- * @brief Parses and updates a single file in the source collection
- */
-class TaskUpdateSourceFileData :
+class TaskLinkAst : 
     public virtual zsp::parser::IMarkerListener,
     public virtual jrpc::TaskBase {
 public:
-    TaskUpdateSourceFileData(
-        Context                     *ctxt,
-        SourceFileData              *file);
+    TaskLinkAst(
+        Context                             *ctxt,
+        const std::vector<std::string>      &files);
 
-    TaskUpdateSourceFileData(TaskUpdateSourceFileData *o);
+    TaskLinkAst(TaskLinkAst *o) : TaskBase(o),
+        m_ctxt(o->m_ctxt), m_files(o->m_files.begin(), o->m_files.end()) { }
 
-    virtual ~TaskUpdateSourceFileData();
+    virtual ~TaskLinkAst();
+
+    virtual TaskLinkAst *clone() override {
+        return new TaskLinkAst(this);
+    }
 
     virtual jrpc::ITask *run(jrpc::ITask *parent, bool initial) override;
-
-    virtual TaskUpdateSourceFileData *clone() override {
-        return new TaskUpdateSourceFileData(this);
-    }
 
 	virtual void marker(const zsp::parser::IMarker *m) override;
 
@@ -63,11 +54,10 @@ public:
 private:
     static dmgr::IDebug                 *m_dbg;
     Context                             *m_ctxt;
-    SourceFileData                      *m_file;
-    std::vector<lls::IDiagnosticUP>     m_diagnostics;
+    std::vector<std::string>            m_files;
+
 };
 
 }
 }
-
 

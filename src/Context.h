@@ -54,6 +54,10 @@ public:
         return m_zspp_f->getAstFactory();
     }
 
+    virtual zsp::parser::IFactory *getParserFactory() const {
+        return m_zspp_f;
+    }
+
     virtual lls::IFactory *getLspFactory() const {
         return m_lls_f;
     }

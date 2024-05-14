@@ -39,6 +39,7 @@ public:
 
     TaskWorkspaceStartup(TaskWorkspaceStartup *o) : 
         jrpc::TaskBase(o), m_idx(o->m_idx), m_ctxt(o->m_ctxt),
+        m_files(std::move(o->m_files)),
         m_roots(o->m_roots.begin(), o->m_roots.end()) { }
 
     virtual ITask *clone() { return new TaskWorkspaceStartup(this); }
@@ -46,10 +47,11 @@ public:
     virtual jrpc::ITask *run(jrpc::ITask *parent, bool initial) override;
 
 private:
-    static dmgr::IDebug                     *m_dbg;
-    Context                                 *m_ctxt;
-    int32_t                                 m_idx;
-    std::vector<std::string>                m_roots;
+    static dmgr::IDebug                             *m_dbg;
+    Context                                         *m_ctxt;
+    int32_t                                         m_idx;
+    std::vector<std::string>                        m_roots;
+    std::unique_ptr<std::vector<std::string>>       m_files;
 
 };
 

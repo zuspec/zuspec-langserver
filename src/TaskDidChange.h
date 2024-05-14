@@ -1,5 +1,5 @@
-/*
- * TestTaskBase.cpp
+/**
+ * TaskDidChange.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -16,42 +16,24 @@
  * limitations under the License.
  *
  * Created on:
- *     Author:
+ *     Author: 
  */
-#include "TestTaskBase.h"
-
+#pragma once
 
 namespace zsp {
 namespace ls {
 
 
-TestTaskBase::TestTaskBase() {
 
-}
+class TaskDidChange {
+public:
+    TaskDidChange();
 
-TestTaskBase::~TestTaskBase() {
+    virtual ~TaskDidChange();
 
-}
-
-void TestTaskBase::SetUp() {
-    TestBase::SetUp();
-    m_queue = jrpc::ITaskQueueUP(m_jrpc_factory->mkTaskQueue(0));
-    fprintf(stdout, "queue: %p\n", m_queue.get());
-    fflush(stdout);
-    m_client.init(m_dmgr);
-    m_ctxt = ContextUP(new Context(
-        m_dmgr,
-        m_queue.get(),
-        m_lls_factory,
-        &m_client,
-        m_zsp_factory
-    ));
-}
-
-void TestTaskBase::TearDown() {
-    TestBase::TearDown();
-
-}
+};
 
 }
 }
+
+

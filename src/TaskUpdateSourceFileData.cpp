@@ -36,7 +36,6 @@ TaskUpdateSourceFileData::TaskUpdateSourceFileData(
     SourceFileData                  *file) : TaskBase(ctxt->getQueue()),
         m_ctxt(ctxt), m_file(file) {
     DEBUG_INIT("TaskUpdateSourceFileData", ctxt->getDebugMgr());
-    memset(m_has, 0, sizeof(m_has));
     DEBUG("src.getLiveContent.size()=%d", file->getLiveContent().size());
 }
 
@@ -99,16 +98,12 @@ jrpc::ITask *TaskUpdateSourceFileData::run(jrpc::ITask *parent, bool initial) {
     // as well as if a prior parse had markers and the current one does not.
     // This operation clears the previously-set markers
     if (true /*m_diagnostics.size() > 0 || m_file->haveMarkers() */) {
-        m_file->setHaveMarkers(m_diagnostics.size() > 0);
-        lls::IPublishDiagnosticsParamsUP params(m_ctxt->getLspFactory()->mkPublishDiagnosticsParams(
-            m_file->getUri(),
-            -1,
-            m_diagnostics));
 
-        m_ctxt->getClient()->publishDiagnosticsNotification(params);
     }
 
     m_ctxt->freeAstBuilder(builder);
+
+    setFlags(jrpc::TaskFlags::Complete);
 
     DEBUG_LEAVE("run");
     return runLeave(parent, initial);
@@ -118,44 +113,15 @@ void TaskUpdateSourceFileData::marker(const zsp::parser::IMarker *m) {
     DEBUG_ENTER("marker: %s (%d:%d)", 
         m->msg().c_str(),
         m->loc().lineno, m->loc().linepos);
-    m_has[(int)m->severity()]++;
 
-    lls::DiagnosticSeverity severity = lls::DiagnosticSeverity::Information;
-    switch (m->severity()) {
-        case zsp::parser::MarkerSeverityE::Error:
-            severity = lls::DiagnosticSeverity::Error;
-            break;
-        case zsp::parser::MarkerSeverityE::Warn:
-            severity = lls::DiagnosticSeverity::Warning;
-            break;
-        case zsp::parser::MarkerSeverityE::Info:
-            severity = lls::DiagnosticSeverity::Information;
-            break;
-        case zsp::parser::MarkerSeverityE::Hint:
-            severity = lls::DiagnosticSeverity::Hint;
-            break;
-    }
-
-    int start_lineno = (m->loc().lineno)?m->loc().lineno-1:0;
-    int end_lineno = start_lineno;
-    int start_linepos = m->loc().linepos;
-    int end_linepos = m->loc().linepos+m->loc().extent;
-
-    lls::IPositionUP start(m_ctxt->getLspFactory()->mkPosition(start_lineno, start_linepos));
-    lls::IPositionUP end(m_ctxt->getLspFactory()->mkPosition(end_lineno, end_linepos));
-    lls::IRangeUP range(m_ctxt->getLspFactory()->mkRange(start, end));
-    lls::IDiagnosticUP diagnostic(m_ctxt->getLspFactory()->mkDiagnostic(
-        range,
-        severity,
-        m->msg()
-    ));
-    m_diagnostics.push_back(std::move(diagnostic));
+    zsp::parser::IMarkerUP mc(m->clone());
+    m_file->addSyntaxMarker(mc);
 
     DEBUG_LEAVE("marker: %s", m->msg().c_str());
 }
 
 bool TaskUpdateSourceFileData::hasSeverity(zsp::parser::MarkerSeverityE s) {
-    return m_has[(int)s];
+    return m_file->hasSeverity(s);
 }
 
 dmgr::IDebug *TaskUpdateSourceFileData::m_dbg = 0;

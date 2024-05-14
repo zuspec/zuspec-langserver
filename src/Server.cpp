@@ -26,6 +26,7 @@
 #include "TaskUpdateSourceFileData.h"
 #include "TaskFindSourceFiles.h"
 #include "TaskWorkspaceStartup.h"
+#include "TaskDidOpen.h"
 
 
 namespace zsp {
@@ -97,10 +98,11 @@ lls::IInitializeResultUP Server::initialize(lls::IInitializeParamsUP &params) {
         m_roots.push_back(*it);
     }
 
-    m_queue->addTask(new jrpc::TaskLambda(m_queue.get(),
-        [&](jrpc::ITask *p, bool i) -> jrpc::ITask * {
-            TaskWorkspaceStartup(m_ctxt.get(), m_roots).run(0, true);
-        }), true);
+    // m_queue->addTask(new jrpc::TaskLambda(m_queue.get(),
+    //     [&](jrpc::ITask *p, bool i) -> jrpc::ITask * {
+    //         TaskWorkspaceStartup(m_ctxt.get(), m_roots).run(0, true);
+    //     }), true);
+    TaskWorkspaceStartup(m_ctxt.get(), m_roots).run(0, true);
 
     lls::IInitializeResultUP ret(m_factory->mkInitializeResult(
         capabilites,
@@ -111,7 +113,6 @@ lls::IInitializeResultUP Server::initialize(lls::IInitializeParamsUP &params) {
 
 void Server::didOpen(lls::IDidOpenTextDocumentParamsUP &params) {
     DEBUG_ENTER("didOpen");
-    SourceFileData *src;
 
     // TaskGroup
     // - Ensure file discovery is up-to-date
@@ -123,35 +124,18 @@ void Server::didOpen(lls::IDidOpenTextDocumentParamsUP &params) {
     //   - Send response
     //   - Queue any marker-propagation tasks
 
-    if (m_ctxt->getSourceFiles()->hasFile(params->getTextDocument()->getUri())) {
-        DEBUG("File already found");
-        src = m_ctxt->getSourceFiles()->getFile(params->getTextDocument()->getUri());
-    } else {
-        // This file wasn't found during discovery, so we add it to the
-        // collection that we're managing now.
-        // TODO: Should we mark it as somehow 'unmanaged'?
-        DEBUG("File not found already");
-        src = new SourceFileData(
-            params->getTextDocument()->getUri(),
-            -1);
-        SourceFileDataUP src_up(src);
-        m_ctxt->getSourceFiles()->addFile(src_up);
-    }
-    DEBUG("Set Live Content: %d", params->getTextDocument()->getText().size());
-    src->setLiveContent(params->getTextDocument()->getText());
-    DEBUG("  Set Live Content: %d", src->getLiveContent().size());
+
 
     // What we want to do:
     // - Try to lock the file for writing
     // - Launch an Update task, indicating whether we have a lock
 
     // Now, queue this file for parsing
+    std::string uri = params->getTextDocument()->getUri();
+    std::string live_txt = params->getTextDocument()->getText();
     m_queue->addTask(new jrpc::TaskLambda(m_queue.get(),
-        [src,this](jrpc::ITask *p, bool i) -> jrpc::ITask * {
-
-            TaskUpdateSourceFileData(
-                m_ctxt.get(),
-                src).run(0, true);
+        [uri,live_txt,this](jrpc::ITask *p, bool i) -> jrpc::ITask * {
+            return TaskDidOpen(m_ctxt.get(), uri, live_txt).run(p, i);
         }), true);
 
     DEBUG_LEAVE("didOpen");

@@ -19,6 +19,7 @@
  *     Author: 
  */
 #pragma once
+#include "dmgr/IDebugMgr.h"
 #include "lls/IClient.h"
 
 namespace zsp {
@@ -31,6 +32,8 @@ public:
     TestClient();
 
     virtual ~TestClient();
+
+    void init(dmgr::IDebugMgr *dmgr);
 
     virtual void publishDiagnosticsNotification(
         lls::IPublishDiagnosticsParamsUP     &params) override;
@@ -48,6 +51,15 @@ public:
         int32_t                         code,
         const std::string               &msg,
         lls::IJson                      *data) override;
+
+    const std::vector<lls::IPublishDiagnosticsParamsUP> &getDiagnostics() const {
+        return m_diagnostics;
+    }
+
+private:
+    static dmgr::IDebug                                 *m_dbg;
+    dmgr::IDebugMgr                                     *m_dmgr;
+    std::vector<lls::IPublishDiagnosticsParamsUP>       m_diagnostics;
 
 
 };

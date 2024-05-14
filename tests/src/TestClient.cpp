@@ -18,6 +18,7 @@
  * Created on:
  *     Author:
  */
+#include "dmgr/impl/DebugMacros.h"
 #include "TestClient.h"
 
 
@@ -25,7 +26,7 @@ namespace zsp {
 namespace ls {
 
 
-TestClient::TestClient() {
+TestClient::TestClient() : m_dmgr(0) {
 
 }
 
@@ -33,15 +34,24 @@ TestClient::~TestClient() {
 
 }
 
+void TestClient::init(dmgr::IDebugMgr *dmgr) {
+    m_dmgr = dmgr;
+    DEBUG_INIT("zsp::ls::TestClient", dmgr);
+}
+
 void TestClient::publishDiagnosticsNotification(
         lls::IPublishDiagnosticsParamsUP     &params) {
-
+    DEBUG_ENTER("publishDiagnosticNotification");
+    m_diagnostics.push_back(std::move(params));
+    DEBUG_LEAVE("publishDiagnosticNotification");
 }
 
 void TestClient::sendNotification(
         const std::string               &method,
         lls::IJson                      *params) {
+    DEBUG_ENTER("sendNotification");
 
+    DEBUG_LEAVE("sendNotification");
 }
 
 void TestClient::sendRspSuccess(
@@ -57,6 +67,10 @@ void TestClient::sendRspError(
         lls::IJson                      *data) {
 
 }
+
+dmgr::IDebug *TestClient::m_dbg = 0;
+
+
 
 }
 }
