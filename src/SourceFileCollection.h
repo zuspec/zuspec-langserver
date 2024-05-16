@@ -25,6 +25,7 @@
 #include "dmgr/IDebugMgr.h"
 #include "jrpc/ITaskQueue.h"
 #include "jrpc/impl/LockRwValid.h"
+#include "zsp/ast/IRootSymbolScope.h"
 #include "SourceFileData.h"
 
 namespace zsp {
@@ -76,6 +77,7 @@ private:
     std::map<std::string,int32_t>           m_uri_id_m;
 
     std::vector<SourceFileDataUP>           m_file_l;
+    ast::IRootSymbolScopeUP                 m_global;
 
     // Sequence id associated with updates to static AST
     int32_t                                 m_staticAstVersion;

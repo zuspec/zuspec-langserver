@@ -22,10 +22,12 @@
 #include "jrpc/impl/TaskLambda.h"
 #include "lls/IDocumentSymbolResponse.h"
 #include "Server.h"
-#include "TaskBuildDocumentSymbols.h"
+#include "TaskDocumentSymbols.h"
 #include "TaskUpdateSourceFileData.h"
 #include "TaskFindSourceFiles.h"
 #include "TaskWorkspaceStartup.h"
+#include "TaskDidChange.h"
+#include "TaskDidClose.h"
 #include "TaskDidOpen.h"
 
 
@@ -98,10 +100,6 @@ lls::IInitializeResultUP Server::initialize(lls::IInitializeParamsUP &params) {
         m_roots.push_back(*it);
     }
 
-    // m_queue->addTask(new jrpc::TaskLambda(m_queue.get(),
-    //     [&](jrpc::ITask *p, bool i) -> jrpc::ITask * {
-    //         TaskWorkspaceStartup(m_ctxt.get(), m_roots).run(0, true);
-    //     }), true);
     TaskWorkspaceStartup(m_ctxt.get(), m_roots).run(0, true);
 
     lls::IInitializeResultUP ret(m_factory->mkInitializeResult(
@@ -114,79 +112,35 @@ lls::IInitializeResultUP Server::initialize(lls::IInitializeParamsUP &params) {
 void Server::didOpen(lls::IDidOpenTextDocumentParamsUP &params) {
     DEBUG_ENTER("didOpen");
 
-    // TaskGroup
-    // - Ensure file discovery is up-to-date
-    // - Acquire lock on URI
-    //   - Obtain or create 'src'
-    //   - Parse live content (no need to lock)
-    //   - Create "everything but me" linked image
-    //   - Create initial "everything + live" linked image
-    //   - Send response
-    //   - Queue any marker-propagation tasks
-
-
-
-    // What we want to do:
-    // - Try to lock the file for writing
-    // - Launch an Update task, indicating whether we have a lock
-
     // Now, queue this file for parsing
-    std::string uri = params->getTextDocument()->getUri();
-    std::string live_txt = params->getTextDocument()->getText();
-    m_queue->addTask(new jrpc::TaskLambda(m_queue.get(),
-        [uri,live_txt,this](jrpc::ITask *p, bool i) -> jrpc::ITask * {
-            return TaskDidOpen(m_ctxt.get(), uri, live_txt).run(p, i);
-        }), true);
+    // Note: TaskDidOpen is known to yield on start
+    TaskDidOpen(
+        m_ctxt.get(), 
+        params->getTextDocument()->getUri(),
+        params->getTextDocument()->getText()).run(0, true);
 
     DEBUG_LEAVE("didOpen");
 }
 
 void Server::didChange(lls::IDidChangeTextDocumentParamsUP &params) {
-    SourceFileData *src;
+    DEBUG_ENTER("didChange");
 
-    if (!m_ctxt->getSourceFiles()->hasFile(params->getTextDocument()->getUri())) {
-        // ERROR
-        DEBUG("Error: attempting to change an unopened file");
-        return;
-    }
+    // TODO: handle incremental change updates
 
-    src = m_ctxt->getSourceFiles()->getFile(params->getTextDocument()->getUri());
+    TaskDidChange(
+        m_ctxt.get(),
+        params->getTextDocument()->getUri(),
+        params->getChanges().at(0)->getText());
 
-    for (std::vector<lls::ITextDocumentContentChangeEventUP>::const_iterator
-        it=params->getChanges().begin();
-        it!=params->getChanges().end(); it++) {
-        DEBUG("Change: hasRange=%p text=%s",
-            (*it)->getRange(),
-            (*it)->getText().c_str());
-    }
-    src->setLiveContent(params->getChanges().at(0)->getText());
-
-    // TODO: file-content changing should prompt an
-    // update of the linked view for this file
-    // Link updates depend on both the 'live' content being
-    // parsed *and* any updates of non-live content completing
-
-    TaskUpdateSourceFileData(m_ctxt.get(), src).run(0, true); 
+    DEBUG_LEAVE("didChange");
 }
 
 void Server::didClose(lls::IDidCloseTextDocumentParamsUP &params) {
     DEBUG_ENTER("didClose");
-    SourceFileData *src;
 
-    if (!m_ctxt->getSourceFiles()->hasFile(params->getTextDocument()->getUri())) {
-        // ERROR
-        return;
-    }
-
-    src = m_ctxt->getSourceFiles()->getFile(params->getTextDocument()->getUri());
-    // Revert to being a closed file
-    src->setLiveContent("");
-
-    // Now, queue this file for parsing
-    m_queue->addTask(new jrpc::TaskLambda(m_queue.get(),
-        [&](jrpc::ITask *p, bool i) -> jrpc::ITask * {
-            TaskUpdateSourceFileData(m_ctxt.get(), src).run(0, true);
-        }), true);
+    TaskDidClose(
+        m_ctxt.get(),
+        params->getTextDocument()->getUri()).run(0, true);
 
     DEBUG_LEAVE("didClose");
 }
@@ -210,40 +164,15 @@ lls::IDocumentSymbolResponseUP Server::documentSymbols(
     const std::string               &id,
     lls::IDocumentSymbolParamsUP    &params) {
     DEBUG_ENTER("documentSymbols %s", params->getTextDocument()->getUri().c_str());
-    SourceFileData *src = 0;
-    zsp::ast::IGlobalScope *global = 0;
 
-    // Because we're just looking at symbols in a single file,
-    // we only need to predicate symbols on live updates to 
-    // this file.
-    // - Pending 'didOpen' handling
-    // - Pending 'fileChange' operations
-    // 
-    // First, check if 'global' is locked
-    // - If so, wait
-    // Next, check if <file> is locked
-    // - If so, wait
-    // Finally, lock file m,.
-
-    lls::IDocumentSymbolResponseUP response;
-    if (m_ctxt->getSourceFiles()->hasFile(params->getTextDocument()->getUri())) {
-        src = m_ctxt->getSourceFiles()->getFile(params->getTextDocument()->getUri());
-        global = (src->getLiveAst())?src->getLiveAst():src->getStaticAst();
-    }
-
-    if (!global) {
-        // ERROR -- Create a null response to keep everything moving
-        std::vector<lls::IDocumentSymbolUP> symbols;
-        response = m_factory->mkDocumentSymbolResponse(symbols);
-        DEBUG("Global is null");
-    } else {
-        TaskBuildDocumentSymbols builder(m_factory);
-        response = builder.build(global);
-    }
+    TaskDocumentSymbols(
+        m_ctxt.get(), 
+        params->getTextDocument()->getUri(),
+        id).run(0, true);
 
     DEBUG_LEAVE("documentSymbols");
 
-    return response;
+    return 0;
 }
 
 dmgr::IDebug *Server::m_dbg = 0;

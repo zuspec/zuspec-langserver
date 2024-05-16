@@ -44,7 +44,8 @@ class TaskUpdateSourceFileData :
 public:
     TaskUpdateSourceFileData(
         Context                     *ctxt,
-        SourceFileData              *file);
+        SourceFileData              *file,
+        bool                        update_live);
 
     TaskUpdateSourceFileData(TaskUpdateSourceFileData *o);
 
@@ -64,6 +65,7 @@ private:
     static dmgr::IDebug                 *m_dbg;
     Context                             *m_ctxt;
     SourceFileData                      *m_file;
+    bool                                m_update_live;
     std::vector<lls::IDiagnosticUP>     m_diagnostics;
 };
 

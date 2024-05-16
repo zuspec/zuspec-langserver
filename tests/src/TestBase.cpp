@@ -206,14 +206,21 @@ std::string TestBase::dirname(const std::string &path) {
     }
 }
 
+/*
 bool TestBase::createTree(const std::map<std::string,std::string> &files) {
     for (std::map<std::string,std::string>::const_iterator 
         it=files.begin();
         it!=files.end(); it++) {
+        std::string name = it->first;
+
+        fprintf(stdout, "first: %s\n", name.c_str());
+        fflush(stdout);
+
         std::string dir = dirname(it->first);
         std::string file = basename(it->first);
 
         fprintf(stdout, "dir=%s ; base=%s\n", dir.c_str(), file.c_str());
+        fflush(stdout);
 
         if (dir == "") {
             dir = m_testdir;
@@ -228,9 +235,50 @@ bool TestBase::createTree(const std::map<std::string,std::string> &files) {
         std::string filename = dir + "/" + file;
 
         FILE *fp = fopen(filename.c_str(), "w");
-        fwrite(it->second.c_str(), 1, it->second.size(), fp);
-        fclose(fp);
+        if (fp) {
+            fwrite(it->second.c_str(), 1, it->second.size(), fp);
+            fclose(fp);
+        } else {
+            fprintf(stdout, "Error: Failed to open %s\n", filename.c_str());
+            fflush(stdout);
+            exit(1);
+        }
     }
+}
+*/
+
+bool TestBase::createTree(const std::vector<std::pair<std::string,std::string>> &files) {
+    for (std::vector<std::pair<std::string,std::string>>::const_iterator 
+        it=files.begin();
+        it!=files.end(); it++) {
+        std::string name = it->first;
+
+        std::string dir = dirname(name);
+        std::string file = basename(name);
+
+        if (dir == "") {
+            dir = m_testdir;
+        } else {
+            dir = m_testdir + "/" + dir;
+        }
+
+        if (!isdir(dir)) {
+            mkdir(dir);
+        }
+
+        std::string filename = dir + "/" + file;
+
+        FILE *fp = fopen(filename.c_str(), "w");
+        if (fp) {
+            fwrite(it->second.c_str(), 1, it->second.size(), fp);
+            fclose(fp);
+        } else {
+            fprintf(stdout, "Error: Failed to open %s\n", filename.c_str());
+            fflush(stdout);
+            exit(1);
+        }
+    }
+    return true;
 }
 
 TestBase::ClientServerData TestBase::mkClientServer() {

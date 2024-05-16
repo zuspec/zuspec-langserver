@@ -1,5 +1,5 @@
 /**
- * TaskDidChange.h
+ * TaskDocumentSymbols.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -27,31 +27,29 @@ namespace ls {
 
 
 
-class TaskDidChange : public jrpc::TaskBase {
+class TaskDocumentSymbols : public jrpc::TaskBase {
 public:
-    TaskDidChange(
+    TaskDocumentSymbols(
         Context             *ctxt,
         const std::string   &uri,
-        const std::string   &content);
+        const std::string   &id);
 
-    TaskDidChange(TaskDidChange *o) : TaskBase(o),
-        m_ctxt(o->m_ctxt), m_file(o->m_file), m_uri(o->m_uri), 
-        m_content(o->m_content), m_idx(o->m_idx) { }
+    TaskDocumentSymbols(TaskDocumentSymbols *o) : TaskBase(o),
+        m_ctxt(o->m_ctxt), m_uri(o->m_uri), m_id(o->m_id), m_idx(o->m_idx) { }
 
-    virtual ~TaskDidChange();
+    virtual ~TaskDocumentSymbols();
 
-    virtual TaskDidChange *clone() override {
-        return new TaskDidChange(this);
+    virtual TaskDocumentSymbols *clone() override {
+        return new TaskDocumentSymbols(this);
     }
-    
-    virtual jrpc::ITask *run(jrpc::ITask *parent, bool initial) override;
+
+    jrpc::ITask *run(jrpc::ITask *parent, bool initial) override;
 
 private:
     static dmgr::IDebug     *m_dbg;
     Context                 *m_ctxt;
-    SourceFileData          *m_file;
     std::string             m_uri;
-    std::string             m_content;
+    std::string             m_id;
     int32_t                 m_idx;
 };
 

@@ -28,8 +28,9 @@ namespace ls {
 
 TaskPublishDiagnostics::TaskPublishDiagnostics(
     Context             *ctxt,
-    SourceFileData      *file) : TaskBase(ctxt->getQueue()), 
-        m_ctxt(ctxt), m_file(file) {
+    SourceFileData      *file,
+    bool                use_live) : TaskBase(ctxt->getQueue()), 
+        m_ctxt(ctxt), m_file(file), m_use_live(use_live) {
     DEBUG_INIT("zsp::ls::TaskPublishDiagnostics", ctxt->getDebugMgr());
     m_max = 100;
 }
@@ -42,9 +43,9 @@ jrpc::ITask *TaskPublishDiagnostics::run(jrpc::ITask *parent, bool initial) {
     runEnter(parent, initial);
     std::vector<lls::IDiagnosticUP> diagnostics;
 
-    for (uint32_t i=0; i<m_max && i<m_file->getSyntaxMarkers().size(); i++) {
+    for (uint32_t i=0; i<m_max && i<m_file->getSyntaxMarkers(m_use_live).size(); i++) {
         diagnostics.push_back(std::move(markerToDiagnostic(
-            m_file->getSyntaxMarkers().at(i).get())));
+            m_file->getSyntaxMarkers(m_use_live).at(i).get())));
     }
 
     lls::IPublishDiagnosticsParamsUP params(m_ctxt->getLspFactory()->mkPublishDiagnosticsParams(

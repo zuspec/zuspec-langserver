@@ -57,17 +57,23 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
             m_idx = 1;
 
             // Yield this task after startup
-            if (!jrpc::TaskLockWrite(m_queue, m_ctxt->getSourceFiles()->getLock()).run(this, true)->done()) {
-                break;
+            jrpc::ITask *n = jrpc::TaskLockWrite(m_queue, m_ctxt->getSourceFiles()->getLock()).run(this, true);
+            
+            if (n && !n->done()) {
+                DEBUG("Not locked -- block");
             } else {
+                DEBUG("Locked");
                 setFlags(jrpc::TaskFlags::Yield);
-                break;
             }
+            break;
         }
         case 1: { // We now hold a lock to the source collection. 
             DEBUG("Finding source files");
             m_idx = 2;
-            if (!TaskFindSourceFiles(m_ctxt->getDebugMgr(), m_queue, m_roots).run(this, 1)->done()) {
+            jrpc::ITask *n = TaskFindSourceFiles(m_ctxt->getDebugMgr(), m_queue, m_roots).run(this, 1);
+            
+            if (n && !n->done()) {
+                DEBUG("Blocked on finding source files");
                 break;
             }
         }
@@ -77,6 +83,7 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
             m_files = std::unique_ptr<std::vector<std::string>>(TaskFindSourceFiles::getResult(getResult()));
 
             // Start and queue individual jobs to process files
+#ifdef MULTITHREADED
             std::vector<jrpc::ITask *> tasks;
             for (std::vector<std::string>::const_iterator
                 f_it=m_files->begin();
@@ -89,7 +96,8 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
                 SourceFileData *file = m_ctxt->getSourceFiles()->getFile(*f_it);
                 tasks.push_back(new jrpc::TaskLambda(m_ctxt->getQueue(),
                     [this,file](jrpc::ITask *p, bool i) -> jrpc::ITask * {
-                        return TaskUpdateSourceFileData(m_ctxt, file).run(0, true);
+                        fprintf(stdout, "Lambda starting\n"); fflush(stdout);
+                        return TaskUpdateSourceFileData(m_ctxt, file, false).run(p, i);
                     }));
             }
 
@@ -99,6 +107,19 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
                 DEBUG("-- Jobs incomplete");
                 break;
             }
+#else // !MULTITHREADED
+            for (std::vector<std::string>::const_iterator
+                f_it=m_files->begin();
+                f_it!=m_files->end(); f_it++) {
+                if (!m_ctxt->getSourceFiles()->hasFile(*f_it)) {
+                    SourceFileDataUP file(new SourceFileData(*f_it, 0));
+                    m_ctxt->getSourceFiles()->addFile(file);
+                }
+
+                SourceFileData *file = m_ctxt->getSourceFiles()->getFile(*f_it);
+                TaskUpdateSourceFileData(m_ctxt, file, false).run(this, true);
+            }
+#endif
         }
 
         case 3: { // If no parse errors, create a linked representation
@@ -109,7 +130,7 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
                 f_it=m_files->begin();
                 f_it!=m_files->end(); f_it++) {
                 SourceFileData *file = m_ctxt->getSourceFiles()->getFile(*f_it);
-                if ((have_errors |= file->hasSeverity(zsp::parser::MarkerSeverityE::Error))) {
+                if ((have_errors |= file->hasSeverity(zsp::parser::MarkerSeverityE::Error, false))) {
                     break;
                 }
             }
@@ -132,7 +153,7 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
                 f_it!=m_files->end(); f_it++) {
                 DEBUG("Publishing diagnostics for %s", f_it->c_str());
                 SourceFileData *file = m_ctxt->getSourceFiles()->getFile(*f_it);
-                TaskPublishDiagnostics(m_ctxt, file).run(0, true);
+                TaskPublishDiagnostics(m_ctxt, file, false).run(0, true);
             }
         }
 

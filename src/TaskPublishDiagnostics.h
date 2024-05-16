@@ -32,10 +32,12 @@ class TaskPublishDiagnostics : public jrpc::TaskBase {
 public:
     TaskPublishDiagnostics(
         Context             *ctxt,
-        SourceFileData      *file);
+        SourceFileData      *file,
+        bool                use_live);
 
     TaskPublishDiagnostics(TaskPublishDiagnostics *o) : 
-        TaskBase(o), m_ctxt(o->m_ctxt), m_file(o->m_file) { }
+        TaskBase(o), m_ctxt(o->m_ctxt), m_file(o->m_file), 
+        m_use_live(o->m_use_live) { }
 
     virtual ~TaskPublishDiagnostics();
 
@@ -52,6 +54,7 @@ private:
     static dmgr::IDebug         *m_dbg;
     Context                     *m_ctxt;
     SourceFileData              *m_file;
+    bool                        m_use_live;
     int32_t                     m_max;
 
 };

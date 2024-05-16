@@ -1,5 +1,5 @@
 /**
- * TaskDidChange.h
+ * TaskDidClose.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -27,32 +27,29 @@ namespace ls {
 
 
 
-class TaskDidChange : public jrpc::TaskBase {
+class TaskDidClose : public jrpc::TaskBase {
 public:
-    TaskDidChange(
-        Context             *ctxt,
-        const std::string   &uri,
-        const std::string   &content);
+    TaskDidClose(
+        Context             *ctxt, 
+        const std::string   &uri);
 
-    TaskDidChange(TaskDidChange *o) : TaskBase(o),
-        m_ctxt(o->m_ctxt), m_file(o->m_file), m_uri(o->m_uri), 
-        m_content(o->m_content), m_idx(o->m_idx) { }
+    TaskDidClose(TaskDidClose *o) : TaskBase(o),
+        m_ctxt(o->m_ctxt), m_uri(o->m_uri), m_idx(o->m_idx) { }
 
-    virtual ~TaskDidChange();
+    virtual ~TaskDidClose();
 
-    virtual TaskDidChange *clone() override {
-        return new TaskDidChange(this);
+    virtual TaskDidClose *clone() override { 
+        return new TaskDidClose(this);
     }
-    
-    virtual jrpc::ITask *run(jrpc::ITask *parent, bool initial) override;
+
+    jrpc::ITask *run(jrpc::ITask *parent, bool initial) override;
 
 private:
-    static dmgr::IDebug     *m_dbg;
-    Context                 *m_ctxt;
-    SourceFileData          *m_file;
-    std::string             m_uri;
-    std::string             m_content;
-    int32_t                 m_idx;
+    static dmgr::IDebug             *m_dbg;
+    Context                         *m_ctxt;
+    std::string                     m_uri;
+    int32_t                         m_idx;
+
 };
 
 }

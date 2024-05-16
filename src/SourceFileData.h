@@ -105,29 +105,31 @@ public:
         m_haveMarkers = h;
     }
 
-    virtual void clearMarkers();
+    virtual void clearMarkers(bool live);
 
-    virtual void addSyntaxMarker(zsp::parser::IMarkerUP &marker);
+    virtual void addSyntaxMarker(zsp::parser::IMarkerUP &marker, bool live);
 
-    virtual const std::vector<zsp::parser::IMarkerUP> & getSyntaxMarkers() const {
-        return m_syntaxMarkers;
+    virtual const std::vector<zsp::parser::IMarkerUP> & getSyntaxMarkers(bool live) const {
+        return (live)?m_syntaxMarkersLive:m_syntaxMarkers;
     }
 
-    virtual void addLinkMarker(zsp::parser::IMarkerUP &marker);
+    virtual void addLinkMarker(zsp::parser::IMarkerUP &marker, bool live);
 
-    virtual const std::vector<zsp::parser::IMarkerUP> & getLinkMarkers() const {
-        return m_linkMarkers;
+    virtual const std::vector<zsp::parser::IMarkerUP> & getLinkMarkers(bool live) const {
+        return (live)?m_linkMarkersLive:m_linkMarkers;
     }
 
-    virtual void addSemanticMarker(zsp::parser::IMarkerUP &marker);
+    virtual void addSemanticMarker(zsp::parser::IMarkerUP &marker, bool live);
 
     virtual const std::vector<zsp::parser::IMarkerUP> & getSemanticMarkers() const {
         return m_semanticMarkers;
     }
 
-    bool hasSeverity(zsp::parser::MarkerSeverityE s) {
-        return m_has[(int)s];
+    bool hasSeverity(zsp::parser::MarkerSeverityE s, bool live) {
+        return (live)?m_hasLive[(int)s]:m_has[(int)s];
     }
+
+    void closeLiveView();
 
 private:
     std::string                             m_uri;
@@ -144,7 +146,11 @@ private:
     std::vector<zsp::parser::IMarkerUP>     m_syntaxMarkers;
     std::vector<zsp::parser::IMarkerUP>     m_linkMarkers;
     std::vector<zsp::parser::IMarkerUP>     m_semanticMarkers;
+    std::vector<zsp::parser::IMarkerUP>     m_syntaxMarkersLive;
+    std::vector<zsp::parser::IMarkerUP>     m_linkMarkersLive;
+    std::vector<zsp::parser::IMarkerUP>     m_semanticMarkersLive;
     int                                     m_has[(int)zsp::parser::MarkerSeverityE::NumLevels];
+    int                                     m_hasLive[(int)zsp::parser::MarkerSeverityE::NumLevels];
     jrpc::LockRw                            m_lock;
 
 };

@@ -31,32 +31,65 @@ SourceFileData::SourceFileData(
         m_uri(uri), m_id(-1), m_timestamp(timestamp),
         m_haveMarkers(false) {
     memset(m_has, 0, sizeof(m_has));
+    memset(m_hasLive, 0, sizeof(m_hasLive));
 }
 
 SourceFileData::~SourceFileData() {
 
 }
 
-void SourceFileData::clearMarkers() {
-    m_syntaxMarkers.clear();
-    m_linkMarkers.clear();
-    m_semanticMarkers.clear();
-    memset(m_has, 0, sizeof(m_has));
+void SourceFileData::clearMarkers(bool live) {
+    if (live) {
+        m_syntaxMarkersLive.clear();
+        m_linkMarkersLive.clear();
+        m_semanticMarkersLive.clear();
+        memset(m_hasLive, 0, sizeof(m_hasLive));
+    } else {
+        m_syntaxMarkers.clear();
+        m_linkMarkers.clear();
+        m_semanticMarkers.clear();
+        memset(m_has, 0, sizeof(m_has));
+    }
 }
 
-void SourceFileData::addSyntaxMarker(zsp::parser::IMarkerUP &marker) {
-    m_has[(int)marker->severity()]++;
-    m_syntaxMarkers.push_back(std::move(marker));
+void SourceFileData::addSyntaxMarker(zsp::parser::IMarkerUP &marker, bool live) {
+    if (live) {
+        m_hasLive[(int)marker->severity()]++;
+        m_syntaxMarkersLive.push_back(std::move(marker));
+    } else {
+        m_has[(int)marker->severity()]++;
+        m_syntaxMarkers.push_back(std::move(marker));
+    }
 }
 
-void SourceFileData::addLinkMarker(zsp::parser::IMarkerUP &marker) {
-    m_has[(int)marker->severity()]++;
-    m_linkMarkers.push_back(std::move(marker));
+void SourceFileData::addLinkMarker(zsp::parser::IMarkerUP &marker, bool live) {
+    if (live) {
+        m_hasLive[(int)marker->severity()]++;
+        m_linkMarkersLive.push_back(std::move(marker));
+    } else {
+        m_has[(int)marker->severity()]++;
+        m_linkMarkers.push_back(std::move(marker));
+    }
 }
 
-void SourceFileData::addSemanticMarker(zsp::parser::IMarkerUP &marker) {
-    m_has[(int)marker->severity()]++;
-    m_semanticMarkers.push_back(std::move(marker));
+void SourceFileData::addSemanticMarker(zsp::parser::IMarkerUP &marker, bool live) {
+    if (live) {
+        m_hasLive[(int)marker->severity()]++;
+        m_semanticMarkersLive.push_back(std::move(marker));
+    } else {
+        m_has[(int)marker->severity()]++;
+        m_semanticMarkers.push_back(std::move(marker));
+    }
+}
+
+void SourceFileData::closeLiveView() {
+    // Clear live markers
+    m_syntaxMarkersLive.clear();
+    m_linkMarkersLive.clear();
+    m_semanticMarkersLive.clear();
+
+    m_liveContent.clear();
+    m_liveAst.reset();
 }
 
 }

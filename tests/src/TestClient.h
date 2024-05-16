@@ -56,6 +56,10 @@ public:
         return m_diagnostics;
     }
 
+    void clearDiagnostics() {
+        m_diagnostics.clear();
+    }
+
 private:
     static dmgr::IDebug                                 *m_dbg;
     dmgr::IDebugMgr                                     *m_dmgr;

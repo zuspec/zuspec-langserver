@@ -69,7 +69,9 @@ protected:
 
     std::string dirname(const std::string &path);
 
-    bool createTree(const std::map<std::string,std::string> &files);
+//    bool createTree(const std::map<std::string,std::string> &files);
+
+    bool createTree(const std::vector<std::pair<std::string,std::string>> &files);
 
 protected:
     std::string                 m_testdir;

@@ -1,5 +1,5 @@
 /**
- * TaskDidChange.h
+ * TaskUpdateFileSymtab.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -19,7 +19,7 @@
  *     Author: 
  */
 #pragma once
-#include "jrpc/impl/TaskBase.h"
+#include "jrpc/impl/TaskBase.h" 
 #include "Context.h"
 
 namespace zsp {
@@ -27,31 +27,36 @@ namespace ls {
 
 
 
-class TaskDidChange : public jrpc::TaskBase {
+class TaskUpdateFileSymtab : 
+    public virtual parser::IMarkerListener,
+    public virtual jrpc::TaskBase {
 public:
-    TaskDidChange(
+    TaskUpdateFileSymtab(
         Context             *ctxt,
-        const std::string   &uri,
-        const std::string   &content);
+        const std::string   &uri
+    );
 
-    TaskDidChange(TaskDidChange *o) : TaskBase(o),
-        m_ctxt(o->m_ctxt), m_file(o->m_file), m_uri(o->m_uri), 
-        m_content(o->m_content), m_idx(o->m_idx) { }
+    TaskUpdateFileSymtab(TaskUpdateFileSymtab *o) : TaskBase(o),
+        m_ctxt(o->m_ctxt), m_file(o->m_file),
+        m_uri(o->m_uri), m_idx(o->m_idx) { }
 
-    virtual ~TaskDidChange();
+    virtual ~TaskUpdateFileSymtab();
 
-    virtual TaskDidChange *clone() override {
-        return new TaskDidChange(this);
+    virtual TaskUpdateFileSymtab *clone() override {
+        return new TaskUpdateFileSymtab(this);
     }
-    
+
     virtual jrpc::ITask *run(jrpc::ITask *parent, bool initial) override;
+
+	virtual void marker(const zsp::parser::IMarker *m) override;
+
+	virtual bool hasSeverity(zsp::parser::MarkerSeverityE s) override;
 
 private:
     static dmgr::IDebug     *m_dbg;
     Context                 *m_ctxt;
     SourceFileData          *m_file;
     std::string             m_uri;
-    std::string             m_content;
     int32_t                 m_idx;
 };
 

@@ -33,16 +33,18 @@ namespace ls {
 
 TaskUpdateSourceFileData::TaskUpdateSourceFileData(
     Context                         *ctxt,
-    SourceFileData                  *file) : TaskBase(ctxt->getQueue()),
-        m_ctxt(ctxt), m_file(file) {
+    SourceFileData                  *file,
+    bool                            update_live) : TaskBase(ctxt->getQueue()),
+        m_ctxt(ctxt), m_file(file), m_update_live(update_live) {
     DEBUG_INIT("TaskUpdateSourceFileData", ctxt->getDebugMgr());
     DEBUG("src.getLiveContent.size()=%d", file->getLiveContent().size());
 }
 
 TaskUpdateSourceFileData::TaskUpdateSourceFileData(TaskUpdateSourceFileData *o) :
-    TaskBase(o), m_ctxt(o->m_ctxt), m_file(o->m_file) {
+    TaskBase(o), m_ctxt(o->m_ctxt), m_file(o->m_file),
+    m_update_live(o->m_update_live) {
 
-};
+}
 
 TaskUpdateSourceFileData::~TaskUpdateSourceFileData() {
 
@@ -64,7 +66,9 @@ jrpc::ITask *TaskUpdateSourceFileData::run(jrpc::ITask *parent, bool initial) {
         m_file->getUri().c_str(),
         m_file->getLiveContent().size());
 
-    if (m_file->getLiveContent().size()) {
+    m_file->clearMarkers(m_update_live);
+
+    if (m_update_live) {
         // We're working with live content
         sstr = std::stringstream(m_file->getLiveContent());
         is = &sstr;
@@ -86,11 +90,13 @@ jrpc::ITask *TaskUpdateSourceFileData::run(jrpc::ITask *parent, bool initial) {
         fstr.close();
     }
     
-    if (m_file->getLiveContent().size()) {
+    if (m_update_live) {
+        // Handle last-good here?
         if (m_diagnostics.size() == 0) {
             m_file->setLiveAst(global);
         }
     } else {
+        DEBUG("Set Static AST for %s (%p)", m_file->getUri().c_str(), global.get());
         m_file->setStaticAst(global);
     }
 
@@ -115,13 +121,13 @@ void TaskUpdateSourceFileData::marker(const zsp::parser::IMarker *m) {
         m->loc().lineno, m->loc().linepos);
 
     zsp::parser::IMarkerUP mc(m->clone());
-    m_file->addSyntaxMarker(mc);
+    m_file->addSyntaxMarker(mc, m_update_live);
 
     DEBUG_LEAVE("marker: %s", m->msg().c_str());
 }
 
 bool TaskUpdateSourceFileData::hasSeverity(zsp::parser::MarkerSeverityE s) {
-    return m_file->hasSeverity(s);
+    return m_file->hasSeverity(s, m_update_live);
 }
 
 dmgr::IDebug *TaskUpdateSourceFileData::m_dbg = 0;

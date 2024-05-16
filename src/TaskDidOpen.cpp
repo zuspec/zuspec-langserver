@@ -22,6 +22,7 @@
 #include "jrpc/impl/TaskLockWrite.h"
 #include "TaskDidOpen.h"
 #include "TaskPublishDiagnostics.h"
+#include "TaskUpdateFileSymtab.h"
 #include "TaskUpdateSourceFileData.h"
 
 
@@ -48,15 +49,17 @@ jrpc::ITask *TaskDidOpen::run(jrpc::ITask *parent, bool initial) {
     switch (m_idx) {
         case 0: {
             // First things first: lock the source collection
-            m_idx = 1;
-            if (jrpc::TaskLockWrite(m_queue, m_ctxt->getSourceFiles()->getLock()).run(this, true)->done()) {
+            m_idx++;
+            jrpc::ITask *n = jrpc::TaskLockWrite(m_queue, m_ctxt->getSourceFiles()->getLock()).run(this, true);
+            
+            if (!n || n->done()) {
                 setFlags(jrpc::TaskFlags::Yield);
             }
             break;
         }
         case 1: {
 
-            m_idx = 2;
+            m_idx++;
             if (m_ctxt->getSourceFiles()->hasFile(m_uri)) {
                 DEBUG("File already found");
                 m_file = m_ctxt->getSourceFiles()->getFile(m_uri);
@@ -77,21 +80,41 @@ jrpc::ITask *TaskDidOpen::run(jrpc::ITask *parent, bool initial) {
 
         case 2: {
             // Update the file data
-            m_idx = 3;
+            m_idx++;
 
-            if (!TaskUpdateSourceFileData(m_ctxt, m_file).run(this, true)->done()) {
+            // Update the file data with 'live' data
+            jrpc::ITask *n = TaskUpdateSourceFileData(m_ctxt, m_file, true).run(this, true);
+            
+            if (n && !n->done()) {
                 break;
+            }
+        }
+
+        case 3: {
+            m_idx++;
+
+            // If the live file doesn't have syntax errors, proceed to build
+            // the file view of the symbol table
+            if (!m_file->hasSeverity(parser::MarkerSeverityE::Error, true)) {
+                jrpc::ITask *n = TaskUpdateFileSymtab(m_ctxt, m_uri).run(this, true);
+                
+                if (n && !n->done()) {
+                    break;
+                }
             }
         }
         
-        case 3: {
-            m_idx = 4;
-            if (!TaskPublishDiagnostics(m_ctxt, m_file).run(this, true)->done()) {
+        case 4: {
+            m_idx++;
+            jrpc::ITask *n = TaskPublishDiagnostics(m_ctxt, m_file, true).run(this, true);
+            
+            if (n && !n->done()) {
                 break;
             }
         }
 
-        case 4: {
+        case 5: {
+            m_ctxt->getSourceFiles()->getLock()->unlock_write();
             setFlags(jrpc::TaskFlags::Complete);
         }
     }
