@@ -47,7 +47,8 @@ jrpc::ITask *TaskDocumentSymbols::run(jrpc::ITask *parent, bool initial) {
     switch (m_idx) {
         case 0: {
             m_idx = 1;
-            if (!jrpc::TaskLockRead(m_queue, m_ctxt->getSourceFiles()->getLock()).run(this, true)->done()) {
+            jrpc::ITask *n = jrpc::TaskLockRead(m_queue, m_ctxt->getSourceFiles()->getLock()).run(this, true);
+            if (n && !n->done()) {
                 break;
             }
         }
@@ -77,6 +78,7 @@ jrpc::ITask *TaskDocumentSymbols::run(jrpc::ITask *parent, bool initial) {
             m_ctxt->getClient()->sendRspSuccess(m_id, response.release());
         }
         case 2: {
+            m_ctxt->getSourceFiles()->getLock()->unlock_read();
             setFlags(jrpc::TaskFlags::Complete);
         }
     }

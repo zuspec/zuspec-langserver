@@ -36,10 +36,13 @@ SourceFileCollection::~SourceFileCollection() {
 
 }
 
-void SourceFileCollection::addFile(SourceFileDataUP &file) {
-    file->setId(m_file_l.size());
+int32_t SourceFileCollection::addFile(SourceFileDataUP &file) {
+    int32_t id = m_file_l.size();
+    file->setId(id);
     m_uri_id_m.insert({file->getUri(), file->getId()});
+    m_id_uri_m.insert({file->getId(), file->getUri()});
     m_file_l.push_back(std::move(file));
+    return id;
 }
 
 bool SourceFileCollection::hasFile(const std::string &uri) {
@@ -82,6 +85,10 @@ void SourceFileCollection::updateLiveContent(
      */
 
     DEBUG_LEAVE("updateLiveContent: %s", uri.c_str());
+}
+
+const std::string &SourceFileCollection::getFileUri(int32_t id) {
+    return m_id_uri_m.find(id)->second;
 }
 
 dmgr::IDebug *SourceFileCollection::m_dbg = 0;

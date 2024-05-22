@@ -25,6 +25,7 @@
 #include "jrpc/IFactory.h"
 #include "lls/IFactory.h"
 #include "Server.h"
+#include "TextUtil.h"
 
 namespace zsp {
 namespace ls {

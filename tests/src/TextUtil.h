@@ -1,5 +1,5 @@
 /**
- * TestTaskBase.h
+ * TextUtil.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -19,36 +19,33 @@
  *     Author: 
  */
 #pragma once
-#include "jrpc/ITaskQueue.h"
-#include "Context.h"
-#include "SourceFileCollection.h"
-#include "TestBase.h"
-#include "TestClient.h"
+#include <string>
 
 namespace zsp {
 namespace ls {
 
 
 
-class TestTaskBase : public TestBase {
+class TextUtil {
 public:
-    TestTaskBase();
+    TextUtil(const std::string &doc);
 
-    virtual ~TestTaskBase();
+    virtual ~TextUtil();
 
-    virtual void SetUp() override;
+    int32_t find(const std::string &str);
 
-    virtual void TearDown() override;
+    int32_t lineno() const { return m_lineno; }
 
-    void initWorkspace(
-        const std::vector<std::pair<std::string,std::string>>   &files);
+    int32_t linepos() const { return m_linepos; }
 
-    bool runTasks(int32_t max);
+private:
+    void advance(int32_t idx);
 
-protected:
-    jrpc::ITaskQueueUP          m_queue;
-    ContextUP                   m_ctxt;
-    TestClient                  m_client;
+private:
+    std::string         m_doc;
+    int32_t             m_idx;
+    int32_t             m_lineno;
+    int32_t             m_linepos;
 
 };
 

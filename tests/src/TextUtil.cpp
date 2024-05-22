@@ -1,5 +1,5 @@
-/**
- * TestTaskBase.h
+/*
+ * TextUtil.cpp
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -16,43 +16,45 @@
  * limitations under the License.
  *
  * Created on:
- *     Author: 
+ *     Author:
  */
-#pragma once
-#include "jrpc/ITaskQueue.h"
-#include "Context.h"
-#include "SourceFileCollection.h"
-#include "TestBase.h"
-#include "TestClient.h"
+#include "TextUtil.h"
+
 
 namespace zsp {
 namespace ls {
 
 
+TextUtil::TextUtil(const std::string &doc) : 
+    m_doc(doc), m_idx(0), m_lineno(1), m_linepos(1) {
 
-class TestTaskBase : public TestBase {
-public:
-    TestTaskBase();
+}
 
-    virtual ~TestTaskBase();
+TextUtil::~TextUtil() {
 
-    virtual void SetUp() override;
+}
 
-    virtual void TearDown() override;
+int32_t TextUtil::find(const std::string &str) {
+    int32_t idx = m_doc.find(str, m_idx);
 
-    void initWorkspace(
-        const std::vector<std::pair<std::string,std::string>>   &files);
+    if (idx != -1) {
+        advance(idx);
+    }
 
-    bool runTasks(int32_t max);
+    return idx;
+}
 
-protected:
-    jrpc::ITaskQueueUP          m_queue;
-    ContextUP                   m_ctxt;
-    TestClient                  m_client;
-
-};
+void TextUtil::advance(int32_t idx) {
+    while (m_idx < idx) {
+        if (m_doc.at(m_idx) == '\n') {
+            m_lineno++;
+            m_linepos = 1;
+        } else {
+            m_linepos++;
+        }
+        m_idx++;
+    }
+}
 
 }
 }
-
-

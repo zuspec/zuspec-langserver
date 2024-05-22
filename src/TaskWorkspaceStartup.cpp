@@ -58,7 +58,8 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
 
             // Yield this task after startup
             jrpc::ITask *n = jrpc::TaskLockWrite(m_queue, m_ctxt->getSourceFiles()->getLock()).run(this, true);
-            
+
+            /*
             if (n && !n->done()) {
                 DEBUG("Not locked -- block");
             } else {
@@ -66,6 +67,10 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
                 setFlags(jrpc::TaskFlags::Yield);
             }
             break;
+             */
+            if (n && !n->done()) {
+                break;
+            }
         }
         case 1: { // We now hold a lock to the source collection. 
             DEBUG("Finding source files");

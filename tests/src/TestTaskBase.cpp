@@ -19,6 +19,7 @@
  *     Author:
  */
 #include "TestTaskBase.h"
+#include "TaskWorkspaceStartup.h"
 
 
 namespace zsp {
@@ -51,6 +52,34 @@ void TestTaskBase::SetUp() {
 void TestTaskBase::TearDown() {
     TestBase::TearDown();
 
+}
+
+void TestTaskBase::initWorkspace(
+        const std::vector<std::pair<std::string,std::string>>   &files) {
+    createTree(files);
+
+    std::vector<std::string> roots;
+
+    // for (std::vector<std::pair<std::string,std::string>>::const_iterator
+    //     it=files.begin();
+    //     it!=files.end(); it++) {
+    //     roots.push_back("file://" + m_testdir + "/" + it->first);
+    // }
+    roots.push_back(m_testdir);
+
+    jrpc::ITask *n = TaskWorkspaceStartup(m_ctxt.get(), roots).run(0, true);
+
+    ASSERT_TRUE(n && !n->done());
+
+    ASSERT_FALSE(runTasks(100));
+
+}
+
+bool TestTaskBase::runTasks(int32_t max) {
+    bool pend;
+    for (uint32_t i=0; (pend=m_queue->runOneTask()) && i < max; i++) { }
+
+    return pend;
 }
 
 }

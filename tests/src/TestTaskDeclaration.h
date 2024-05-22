@@ -1,5 +1,5 @@
 /**
- * TestTaskBase.h
+ * TestTaskDeclaration.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -19,36 +19,18 @@
  *     Author: 
  */
 #pragma once
-#include "jrpc/ITaskQueue.h"
-#include "Context.h"
-#include "SourceFileCollection.h"
-#include "TestBase.h"
-#include "TestClient.h"
+#include "TestTaskBase.h"
 
 namespace zsp {
 namespace ls {
 
 
 
-class TestTaskBase : public TestBase {
+class TestTaskDeclaration : public TestTaskBase {
 public:
-    TestTaskBase();
+    TestTaskDeclaration();
 
-    virtual ~TestTaskBase();
-
-    virtual void SetUp() override;
-
-    virtual void TearDown() override;
-
-    void initWorkspace(
-        const std::vector<std::pair<std::string,std::string>>   &files);
-
-    bool runTasks(int32_t max);
-
-protected:
-    jrpc::ITaskQueueUP          m_queue;
-    ContextUP                   m_ctxt;
-    TestClient                  m_client;
+    virtual ~TestTaskDeclaration();
 
 };
 

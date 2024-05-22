@@ -49,10 +49,17 @@ jrpc::ITask *TaskDidChange::run(jrpc::ITask *parent, bool initial) {
         case 0: {
             m_idx = 1;
 
-            if (jrpc::TaskLockWrite(m_queue, m_ctxt->getSourceFiles()->getLock()).run(this, 0)->done()) {
+            jrpc::ITask *n = jrpc::TaskLockWrite(m_queue, m_ctxt->getSourceFiles()->getLock()).run(this, true);
+
+/*
+            if (!n || n->done()) {
                 setFlags(jrpc::TaskFlags::Yield);
             }
             break;
+ */
+            if (n && !n->done()) {
+                break;
+            }
         }
 
         case 1: {
@@ -65,7 +72,8 @@ jrpc::ITask *TaskDidChange::run(jrpc::ITask *parent, bool initial) {
                 DEBUG("File already found");
 
                 // Update the file data with 'live' data
-                if (!TaskUpdateSourceFileData(m_ctxt, m_file, true).run(this, true)->done()) {
+                jrpc::ITask *n = TaskUpdateSourceFileData(m_ctxt, m_file, true).run(this, true);
+                if (n && !n->done()) {
                     break;
                 }
             }
@@ -74,7 +82,9 @@ jrpc::ITask *TaskDidChange::run(jrpc::ITask *parent, bool initial) {
         case 2: {
             m_idx = 3;
             if (m_file) {
-                if (!TaskPublishDiagnostics(m_ctxt, m_file, true).run(this, true)->done()) {
+                jrpc::ITask *n = TaskPublishDiagnostics(m_ctxt, m_file, true).run(this, true);
+                
+                if (n && !n->done()) {
                     break;
                 }
             }

@@ -51,11 +51,16 @@ jrpc::ITask *TaskDidOpen::run(jrpc::ITask *parent, bool initial) {
             // First things first: lock the source collection
             m_idx++;
             jrpc::ITask *n = jrpc::TaskLockWrite(m_queue, m_ctxt->getSourceFiles()->getLock()).run(this, true);
-            
+
+            /*
             if (!n || n->done()) {
                 setFlags(jrpc::TaskFlags::Yield);
             }
             break;
+             */
+            if (n && !n->done()) {
+                break;
+            }
         }
         case 1: {
 

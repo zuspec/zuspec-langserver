@@ -14,11 +14,15 @@ import debug_mgr.core as dm
 import lsprotocol
 from .util import SocketClient
 
+import debug_mgr.core as dmgr
+dmgr.Factory.inst().getDebugMgr().enable(True)
+
 
 @pytest.fixture
 def langserver():
     val = 5
-    print("pre-test")
+    print("pre-test", flush=True)
+    dmgr.Factory.inst().getDebugMgr().enable(True)
 
     zsp_ls_f = zsp_ls.Factory.inst()
 

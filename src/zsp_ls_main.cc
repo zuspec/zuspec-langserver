@@ -49,7 +49,8 @@ int main(int argc, char **argv) {
 
     dmgr::IDebugOutList *out_l = dmgr_f->mkDebugOutList();
 
-    FILE *log_fp = fopen("/home/mballance/debug.log", "w");
+//    FILE *log_fp = fopen("/home/mballance/debug.log", "w");
+    FILE *log_fp = fopen("debug.log", "w");
     out_l->addOutput(dmgr_f->mkDebugOutFile(log_fp, true));
 //    out_l->addOutput(dmgr_f->mkDebugOutFile(stdout, false));
 

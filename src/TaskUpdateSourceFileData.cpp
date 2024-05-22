@@ -51,7 +51,7 @@ TaskUpdateSourceFileData::~TaskUpdateSourceFileData() {
 }
 
 jrpc::ITask *TaskUpdateSourceFileData::run(jrpc::ITask *parent, bool initial) {
-    DEBUG_ENTER("run");
+    DEBUG_ENTER("run fileid: %d", m_file->getId());
     runEnter(parent, initial);
     zsp::ast::IGlobalScopeUP global(
         m_ctxt->getAstFactory()->mkGlobalScope(m_file->getId()));

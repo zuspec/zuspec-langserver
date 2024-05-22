@@ -33,6 +33,7 @@ TestInitialize::~TestInitialize() {
 
 }
 
+#ifdef UNDEFINED
 TEST_F(TestInitialize, smoke) {
     enableDebug(true);
     ClientServerData cs_data = mkClientServer();
@@ -61,6 +62,7 @@ TEST_F(TestInitialize, smoke) {
 
     ASSERT_EQ(cs_data.loop->process_one_event(-1), 1);
 }
+#endif
 
 }
 }

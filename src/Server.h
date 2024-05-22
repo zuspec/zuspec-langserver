@@ -43,11 +43,15 @@ public:
 
     virtual jrpc::ITaskQueue *getQueue() const { return m_queue.get(); }
 
-    virtual lls::IHoverUP hover(
-        const std::string       &id,
-        lls::IHoverParamsUP     &params) override;
+    virtual void hover(
+        const std::string           &id,
+        lls::IHoverParamsUP         &params) override;
 
-	virtual lls::IInitializeResultUP initialize(lls::IInitializeParamsUP &params) override;
+	virtual void initialize(
+        const std::string           &id,
+        lls::IInitializeParamsUP    &params) override;
+
+    virtual void initialized() override;
 
     virtual void didOpen(lls::IDidOpenTextDocumentParamsUP &params) override;
 
@@ -55,7 +59,15 @@ public:
 
     virtual void didClose(lls::IDidCloseTextDocumentParamsUP &params) override;
 
-    virtual lls::IDocumentSymbolResponseUP documentSymbols(
+    virtual void declaration(
+        const std::string               &id,
+        lls::IDeclarationParamsUP       &params) override;
+
+    virtual void definition(
+        const std::string                   &id,
+        lls::ITextDocumentPositionParamsUP  &params) override;
+
+    virtual void documentSymbols(
         const std::string               &id,
         lls::IDocumentSymbolParamsUP    &params) override;
 

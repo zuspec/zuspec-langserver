@@ -43,7 +43,7 @@ public:
 
     virtual ~SourceFileCollection();
 
-    virtual void addFile(SourceFileDataUP &file);
+    virtual int32_t addFile(SourceFileDataUP &file);
 
     virtual bool hasFile(const std::string &uri);
 
@@ -68,6 +68,8 @@ public:
         return &m_lock;
     }
 
+    const std::string &getFileUri(int32_t id);
+
 private:
     static dmgr::IDebug                     *m_dbg;
     dmgr::IDebugMgr                         *m_dmgr;
@@ -75,6 +77,7 @@ private:
     jrpc::LockRwValid                       m_lock;
     std::map<std::string, jrpc::ITask *>    m_live_update_m;
     std::map<std::string,int32_t>           m_uri_id_m;
+    std::map<int32_t,std::string>           m_id_uri_m;
 
     std::vector<SourceFileDataUP>           m_file_l;
     ast::IRootSymbolScopeUP                 m_global;
