@@ -57,6 +57,7 @@ jrpc::ITask *TaskUpdateSourceFileData::run(jrpc::ITask *parent, bool initial) {
         m_ctxt->getAstFactory()->mkGlobalScope(m_file->getId()));
     zsp::parser::IAstBuilder *builder = m_ctxt->allocAstBuilder();
     builder->setMarkerListener(this);
+    builder->setCollectDocStrings(true);
 
     std::istream *is = 0;
     std::stringstream sstr;

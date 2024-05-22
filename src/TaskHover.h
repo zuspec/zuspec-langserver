@@ -20,14 +20,20 @@
  */
 #pragma once
 #include "jrpc/impl/TaskBase.h"
+#include "zsp/ast/impl/VisitorBase.h"
 #include "Context.h"
 
 namespace zsp {
 namespace ls {
 
 
-
-class TaskHover : public jrpc::TaskBase {
+/**
+ * @brief Compute hover results
+ * 
+ */
+class TaskHover : 
+    public virtual jrpc::TaskBase,
+    public virtual ast::VisitorBase {
 public:
     TaskHover(
         const std::string   &id,
@@ -49,6 +55,21 @@ public:
 
     virtual jrpc::ITask *run(jrpc::ITask *parent, bool initial) override;
 
+    virtual void visitAction(ast::IAction *i) override;
+
+    virtual void visitComponent(ast::IComponent *i) override;
+
+    virtual void visitField(ast::IField *i) override;
+
+    virtual void visitStruct(ast::IStruct *i) override;
+
+    virtual void visitDataTypeUserDefined(ast::IDataTypeUserDefined *i) override;
+
+    virtual void visitSymbolTypeScope(ast::ISymbolTypeScope *i) override;
+
+private:
+    void addDocComment(ast::IScopeChild *i);
+
 private:
     static dmgr::IDebug             *m_dbg;
     std::string                     m_id;
@@ -57,6 +78,7 @@ private:
     std::string                     m_uri;
     int32_t                         m_lineno;
     int32_t                         m_linepos;
+    std::string                     m_result;
 };
 
 }

@@ -20,6 +20,7 @@
  */
 #include "dmgr/impl/DebugMacros.h"
 #include "jrpc/impl/TaskLockRead.h"
+#include "zsp/parser/impl/TaskResolveSymbolPathRef.h"
 #include "TaskHover.h"
 
 
@@ -75,19 +76,20 @@ jrpc::ITask *TaskHover::run(jrpc::ITask *parent, bool initial) {
             }
 
             if (res.isValid) {
-                char tmp[128];
-                sprintf(tmp, "Valid @ %d:%d", m_lineno, m_linepos);
-                lls::IContentUP content(factory->mkContentMarkedString("", tmp));
-                lls::IRangeUP range;
+                res.target->accept(this);
+            }
 
+            lls::IRangeUP range;
+            if (m_result.size()) {
+                lls::IJsonUP content(factory->mkMarkupContent(
+                    lls::MarkupKind::Markdown, m_result));
                 m_ctxt->getClient()->sendRspSuccess(
                     m_id,
                     factory->mkHover(content, range).release());
             } else {
                 char tmp[128];
                 sprintf(tmp, "Invalid @ %d:%d", m_lineno, m_linepos);
-                lls::IContentUP content(factory->mkContentMarkedString("", tmp));
-                lls::IRangeUP range;
+                lls::IJsonUP content(factory->mkContentMarkedString("", tmp));
 
                 m_ctxt->getClient()->sendRspSuccess(
                     m_id,
@@ -98,6 +100,58 @@ jrpc::ITask *TaskHover::run(jrpc::ITask *parent, bool initial) {
 
     DEBUG_LEAVE("run");
     return runLeave(parent, initial);
+}
+
+void TaskHover::visitAction(ast::IAction *i) {
+    m_result.append("```pss\n");
+    m_result.append("action " + i->getName()->getId() + "\n");
+    m_result.append("```\n");
+    addDocComment(i);
+}
+
+void TaskHover::visitComponent(ast::IComponent *i) {
+    m_result.append("```pss\n");
+    m_result.append("component " + i->getName()->getId() + "\n");
+    m_result.append("```\n");
+    addDocComment(i);
+}
+
+void TaskHover::visitField(ast::IField *i) {
+
+}
+
+void TaskHover::visitStruct(ast::IStruct *i) {
+    m_result.append("```pss\n");
+    m_result.append("struct " + i->getName()->getId() + "\n");
+    m_result.append("```\n");
+    addDocComment(i);
+}
+
+void TaskHover::visitDataTypeUserDefined(ast::IDataTypeUserDefined *i) {
+    DEBUG_ENTER("visitDataTypeUserDefined");
+
+    if (i->getType_id()->getTarget()) {
+        SourceFileData *file = m_ctxt->getSourceFiles()->getFile(m_uri);
+
+        ast::IScopeChild *target = parser::TaskResolveSymbolPathRef(
+            m_ctxt->getDebugMgr(),
+            file->getFileSymtab()).resolve(i->getType_id()->getTarget());
+        
+        target->accept(m_this);
+    }
+
+    DEBUG_LEAVE("visitDataTypeUserDefined");
+}
+
+void TaskHover::visitSymbolTypeScope(ast::ISymbolTypeScope *i) {
+    i->getTarget()->accept(m_this);
+}
+
+void TaskHover::addDocComment(ast::IScopeChild *i) {
+    if (i->getDocstring() != "") {
+        m_result.append("\n");
+        m_result.append(i->getDocstring());
+    }
 }
 
 dmgr::IDebug *TaskHover::m_dbg = 0;
