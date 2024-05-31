@@ -19,6 +19,7 @@
  *     Author:
  */
 #include "dmgr/FactoryExt.h"
+#include "dmgr/impl/DebugMacros.h"
 #include "jrpc/FactoryExt.h"
 #include "lls/FactoryExt.h"
 #include "zsp/ast/IFactory.h"
@@ -75,6 +76,9 @@ void TestBase::SetUp() {
     std::string testname = ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
     testname += ".";
     testname += ::testing::UnitTest::GetInstance()->current_test_info()->name();
+
+    m_dbg = 0;
+    DEBUG_INIT(testname, m_dmgr);
 
     char tmp[2048];
     getcwd(tmp, sizeof(tmp)-1);
@@ -332,6 +336,8 @@ TestBase::ClientServerData TestBase::mkClientServer() {
 
     return ret;
 }
+
+dmgr::IDebug *TestBase::m_dbg = 0;
 
 }
 }

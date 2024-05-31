@@ -75,6 +75,7 @@ protected:
     bool createTree(const std::vector<std::pair<std::string,std::string>> &files);
 
 protected:
+    static dmgr::IDebug         *m_dbg;
     std::string                 m_testdir;
     dmgr::IDebugMgr             *m_dmgr;
     jrpc::IFactory              *m_jrpc_factory;

@@ -73,6 +73,8 @@ public:
         m_liveContent = c;
     }
 
+    virtual ast::IGlobalScope *getLastGoodAst();
+
     virtual zsp::ast::IGlobalScope *getStaticAst() const {
         return m_staticAst.get();
     }
@@ -138,6 +140,7 @@ private:
     bool                                    m_isOpen;
     std::string                             m_liveContent;
     zsp::ast::IGlobalScopeUP                m_staticAst;
+    zsp::ast::IGlobalScopeUP                m_lastGoodLiveAst;
     zsp::ast::IGlobalScopeUP                m_liveAst;
     zsp::ast::IRootSymbolScopeUP            m_fileSymtab;
     int32_t                                 m_fileSymtabVersion;
@@ -150,7 +153,9 @@ private:
     std::vector<zsp::parser::IMarkerUP>     m_linkMarkersLive;
     std::vector<zsp::parser::IMarkerUP>     m_semanticMarkersLive;
     int                                     m_has[(int)zsp::parser::MarkerSeverityE::NumLevels];
+    int                                     m_hasLink[(int)zsp::parser::MarkerSeverityE::NumLevels];
     int                                     m_hasLive[(int)zsp::parser::MarkerSeverityE::NumLevels];
+    int                                     m_hasLinkLive[(int)zsp::parser::MarkerSeverityE::NumLevels];
     jrpc::LockRw                            m_lock;
 
 };

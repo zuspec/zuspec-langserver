@@ -59,6 +59,7 @@ jrpc::ITask *TaskDidOpen::run(jrpc::ITask *parent, bool initial) {
             break;
              */
             if (n && !n->done()) {
+                DEBUG("Wait for Write lock");
                 break;
             }
         }

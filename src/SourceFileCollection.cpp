@@ -87,6 +87,10 @@ void SourceFileCollection::updateLiveContent(
     DEBUG_LEAVE("updateLiveContent: %s", uri.c_str());
 }
 
+bool SourceFileCollection::hasFileUri(int32_t id) {
+    return m_id_uri_m.find(id) != m_id_uri_m.end();
+}
+
 const std::string &SourceFileCollection::getFileUri(int32_t id) {
     return m_id_uri_m.find(id)->second;
 }

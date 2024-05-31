@@ -56,14 +56,24 @@ public:
         return m_diagnostics;
     }
 
+    const std::vector<lls::IJsonUP> &getResponses() const {
+        return m_responses;
+    }
+
     void clearDiagnostics() {
         m_diagnostics.clear();
+    }
+
+    void clearAll() {
+        clearDiagnostics();
+        m_responses.clear();
     }
 
 private:
     static dmgr::IDebug                                 *m_dbg;
     dmgr::IDebugMgr                                     *m_dmgr;
     std::vector<lls::IPublishDiagnosticsParamsUP>       m_diagnostics;
+    std::vector<lls::IJsonUP>                           m_responses;
 
 
 };

@@ -47,7 +47,7 @@ TaskWorkspaceStartup::~TaskWorkspaceStartup() {
 }
 
 jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
-    DEBUG_ENTER("run");
+    DEBUG_ENTER("run (%d)", m_idx);
     runEnter(parent, initial);
 
     switch (m_idx) {
@@ -69,6 +69,7 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
             break;
              */
             if (n && !n->done()) {
+                DEBUG("Waiting for Write lock");
                 break;
             }
         }
@@ -128,6 +129,7 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
         }
 
         case 3: { // If no parse errors, create a linked representation
+            std::vector<std::string> link_files;
             m_idx = 4;
 
             bool have_errors = false;
@@ -135,18 +137,17 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
                 f_it=m_files->begin();
                 f_it!=m_files->end(); f_it++) {
                 SourceFileData *file = m_ctxt->getSourceFiles()->getFile(*f_it);
-                if ((have_errors |= file->hasSeverity(zsp::parser::MarkerSeverityE::Error, false))) {
-                    break;
+                if (!file->hasSeverity(zsp::parser::MarkerSeverityE::Error, false)) {
+                    link_files.push_back(file->getUri());
+                } else {
+                    have_errors = true;
                 }
             }
 
-            if (!have_errors) {
-                DEBUG("No errors -- build linked index");
-                std::vector<std::string> *fp = m_files.get();
-                TaskLinkAst(m_ctxt, *fp).run(this, true);
-                // TODO: link
-            } else {
-                DEBUG("Have errors, so not productive to build an index");
+            jrpc::ITask *n = TaskLinkAst(m_ctxt, link_files).run(this, true);
+
+            if (n && !n->done()) {
+                break;
             }
         }
 
@@ -164,12 +165,13 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
 
         case 5: {
             // All done. Mark the collection valid and release the write lock
+            DEBUG("Unlock source collection");
             m_ctxt->getSourceFiles()->getLock()->unlock_write_valid(true);
             setFlags(jrpc::TaskFlags::Complete);
         }
     }
 
-    DEBUG_LEAVE("run");
+    DEBUG_LEAVE("run (%d)", m_idx);
     return runLeave(parent, initial);
 }
 

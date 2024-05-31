@@ -47,6 +47,10 @@ jrpc::ITask *TaskPublishDiagnostics::run(jrpc::ITask *parent, bool initial) {
         diagnostics.push_back(std::move(markerToDiagnostic(
             m_file->getSyntaxMarkers(m_use_live).at(i).get())));
     }
+    for (uint32_t i=0; i<m_max && i<m_file->getLinkMarkers(m_use_live).size(); i++) {
+        diagnostics.push_back(std::move(markerToDiagnostic(
+            m_file->getLinkMarkers(m_use_live).at(i).get())));
+    }
 
     lls::IPublishDiagnosticsParamsUP params(m_ctxt->getLspFactory()->mkPublishDiagnosticsParams(
         m_file->getUri(),
@@ -63,8 +67,8 @@ jrpc::ITask *TaskPublishDiagnostics::run(jrpc::ITask *parent, bool initial) {
 lls::IDiagnosticUP TaskPublishDiagnostics::markerToDiagnostic(const zsp::parser::IMarker *m) {
     int start_lineno = (m->loc().lineno)?m->loc().lineno-1:0;
     int end_lineno = start_lineno;
-    int start_linepos = m->loc().linepos;
-    int end_linepos = m->loc().linepos+m->loc().extent;
+    int start_linepos = (m->loc().linepos)?m->loc().linepos-1:m->loc().linepos;
+    int end_linepos = start_linepos + m->loc().extent;
 
     lls::DiagnosticSeverity severity = lls::DiagnosticSeverity::Information;
     switch (m->severity()) {

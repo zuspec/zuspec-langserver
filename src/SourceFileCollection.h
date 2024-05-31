@@ -55,6 +55,14 @@ public:
         return m_file_l;
     }
 
+    ast::IRootSymbolScope *getRoot() {
+        return m_global.get();
+    }
+
+    void setRoot(ast::IRootSymbolScopeUP &root) {
+        m_global = std::move(root);
+    }
+
     virtual bool tryLockFile(
         const std::string           &uri,
         bool                        write);
@@ -67,6 +75,8 @@ public:
     jrpc::LockRwValid *getLock() {
         return &m_lock;
     }
+
+    bool hasFileUri(int32_t id);
 
     const std::string &getFileUri(int32_t id);
 

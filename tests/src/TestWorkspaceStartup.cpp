@@ -72,7 +72,7 @@ TEST_F(TestWorkspaceStartup, smoke) {
     jrpc::ITask *ret = task.run(0, true);
 
     // For now, assume no blocking
-    ASSERT_FALSE(ret->done());
+    ASSERT_TRUE(!ret || ret->done());
 
     bool pend;
     for (uint32_t i=0; (pend=m_queue->runOneTask()) && i < 4; i++) {
@@ -96,6 +96,40 @@ TEST_F(TestWorkspaceStartup, smoke) {
     // - Files discovered
     // - Index state
 
+
+}
+
+TEST_F(TestWorkspaceStartup, initial_link_error) {
+    std::vector<std::pair<std::string,std::string>> files = {
+        {"file1.pss", R"(
+            component C1 {
+
+            }
+        )"},
+        {"file2.pss", R"(
+            component C2 {
+                MissingCompT        c1;
+            }
+        )"},
+    };
+
+    enableDebug(true);
+
+    initWorkspace(files);
+    
+    // We should have a link error
+    ASSERT_EQ(m_client.getDiagnostics().size(), 2);
+
+    uint32_t n_diagnostics = 0;
+    for (std::vector<lls::IPublishDiagnosticsParamsUP>::const_iterator
+        it=m_client.getDiagnostics().begin();
+        it!=m_client.getDiagnostics().end(); it++) {
+        n_diagnostics += (*it)->getDiagnostics().size();
+    }
+    ASSERT_EQ(n_diagnostics, 1);
+
+    // Link errors should not impact index availability
+    ASSERT_TRUE(m_ctxt->getSourceFiles()->getRoot());
 
 }
 
@@ -134,7 +168,7 @@ TEST_F(TestWorkspaceStartup, didOpen) {
     jrpc::ITask *ret = task.run(0, true);
 
     // For now, assume no blocking
-    ASSERT_FALSE(ret->done());
+    ASSERT_TRUE(!ret || ret->done());
 
     bool pend;
     for (uint32_t i=0; (pend=m_queue->runOneTask()) && i < 4; i++) {
@@ -230,8 +264,7 @@ TEST_F(TestWorkspaceStartup, didOpenErr) {
     TaskWorkspaceStartup task(m_ctxt.get(), roots);
     jrpc::ITask *ret = task.run(0, true);
 
-    // For now, assume no blocking
-    ASSERT_FALSE(ret->done());
+    ASSERT_TRUE(!ret || ret->done());
 
     bool pend;
     for (uint32_t i=0; (pend=m_queue->runOneTask()) && i < 4; i++) {
@@ -321,8 +354,7 @@ TEST_F(TestWorkspaceStartup, didChange) {
     TaskWorkspaceStartup task(m_ctxt.get(), roots);
     jrpc::ITask *ret = task.run(0, true);
 
-    // For now, assume no blocking
-    ASSERT_FALSE(ret->done());
+    ASSERT_TRUE(!ret || ret->done());
 
     bool pend;
     for (uint32_t i=0; (pend=m_queue->runOneTask()) && i < 4; i++) {

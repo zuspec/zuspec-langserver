@@ -57,7 +57,7 @@ void TestClient::sendNotification(
 void TestClient::sendRspSuccess(
         const std::string               &id,
         lls::IJson                      *result) {
-
+    m_responses.push_back(lls::IJsonUP(result));
 }
 
 void TestClient::sendRspError(

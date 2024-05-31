@@ -1,5 +1,5 @@
-/*
- * TextUtil.cpp
+/**
+ * TestOpenChange.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -16,45 +16,25 @@
  * limitations under the License.
  *
  * Created on:
- *     Author:
+ *     Author: 
  */
-#include "TextUtil.h"
-
+#pragma once
+#include "TestTaskBase.h"
 
 namespace zsp {
 namespace ls {
 
 
-TextUtil::TextUtil(const std::string &doc) : 
-    m_doc(doc), m_idx(0), m_lineno(0), m_linepos(0) {
 
-}
+class TestOpenChange : public TestTaskBase {
+public:
+    TestOpenChange();
 
-TextUtil::~TextUtil() {
+    virtual ~TestOpenChange();
 
-}
-
-int32_t TextUtil::find(const std::string &str) {
-    int32_t idx = m_doc.find(str, m_idx);
-
-    if (idx != -1) {
-        advance(idx);
-    }
-
-    return idx;
-}
-
-void TextUtil::advance(int32_t idx) {
-    while (m_idx < idx) {
-        if (m_doc.at(m_idx) == '\n') {
-            m_lineno++;
-            m_linepos = 0;
-        } else {
-            m_linepos++;
-        }
-        m_idx++;
-    }
-}
+};
 
 }
 }
+
+

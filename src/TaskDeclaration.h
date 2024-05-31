@@ -54,7 +54,13 @@ public:
 
     virtual void visitDataTypeUserDefined(ast::IDataTypeUserDefined *i) override;
 
+    virtual void visitField(ast::IField *i) override;
+
     virtual void visitSymbolTypeScope(ast::ISymbolTypeScope *i) override;
+
+    virtual void visitTypeIdentifier(ast::ITypeIdentifier *i) override;
+
+    virtual void visitTypeScope(ast::ITypeScope *i) override;
 
 private:
     static dmgr::IDebug     *m_dbg;

@@ -54,9 +54,10 @@ jrpc::ITask *TaskUpdateFileSymtab::run(jrpc::ITask *parent, bool initial) {
         }
         case 1: {
             m_idx = 2;
-            // Build a list of sources that are not this file and do not have errors
-            std::vector<ast::IGlobalScope *> files;
             m_file = m_ctxt->getSourceFiles()->getFile(m_uri);
+            // Build a list of sources that are not this file and do not have errors
+            /*
+            std::vector<ast::IGlobalScope *> files;
             files.push_back(m_file->getLiveAst());
 
             for (std::vector<SourceFileDataUP>::const_iterator
@@ -66,12 +67,16 @@ jrpc::ITask *TaskUpdateFileSymtab::run(jrpc::ITask *parent, bool initial) {
                     files.push_back(it->get()->getStaticAst());
                 }
             }
+             */
 
             // Run the linker
             m_file->clearMarkers(true); // Maybe be more selective?
             parser::ILinkerUP linker(m_ctxt->getParserFactory()->mkAstLinker());
 
-            ast::IRootSymbolScopeUP root(linker->link(this, files));
+            ast::IRootSymbolScopeUP root(linker->linkOverlay(
+                this, 
+                m_ctxt->getSourceFiles()->getRoot(),
+                m_file->getLiveAst()));
 
             m_file->setFileSymtab(root);
         }
@@ -88,11 +93,15 @@ jrpc::ITask *TaskUpdateFileSymtab::run(jrpc::ITask *parent, bool initial) {
 }
 
 void TaskUpdateFileSymtab::marker(const zsp::parser::IMarker *m) {
+    DEBUG_ENTER("marker");
     // Only save messages specific to this file
     if (m->loc().fileid == m_file->getId()) {
-
+        zsp::parser::IMarkerUP mc(m->clone());
+        m_file->addLinkMarker(mc, true);        
+    } else {
+        DEBUG("Not from the target file");
     }
-
+    DEBUG_LEAVE("marker");
 }
 
 bool TaskUpdateFileSymtab::hasSeverity(zsp::parser::MarkerSeverityE s) {

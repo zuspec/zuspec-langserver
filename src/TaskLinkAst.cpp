@@ -41,13 +41,21 @@ jrpc::ITask *TaskLinkAst::run(jrpc::ITask *parent, bool initial) {
     runEnter(parent, initial);
     std::vector<zsp::ast::IGlobalScope *> files;
 
+    for (std::vector<std::string>::const_iterator
+        it=m_files.begin();
+        it!=m_files.end(); it++) {
+        files.push_back(m_ctxt->getSourceFiles()->getFile(*it)->getStaticAst());
+    }
+
     zsp::parser::ILinkerUP linker(m_ctxt->getParserFactory()->mkAstLinker());
 
-    zsp::ast::IRootSymbolScope *root = linker->link(
+    zsp::ast::IRootSymbolScopeUP root(linker->link(
         this,
-        files);
+        files));
 
-    setResult(jrpc::TaskResult(root, false));
+    m_ctxt->getSourceFiles()->setRoot(root);
+
+    setFlags(jrpc::TaskFlags::Complete);
 
     return runLeave(parent, initial);
 }
@@ -57,10 +65,15 @@ void TaskLinkAst::marker(const zsp::parser::IMarker *m) {
         m->msg().c_str(),
         m->loc().lineno, m->loc().linepos);
 
-    /*
-    zsp::parser::IMarkerUP mc(m->clone());
-    m_file->addSyntaxMarker(mc);
-     */
+    if (m_ctxt->getSourceFiles()->hasFileUri(m->loc().fileid)) {
+        std::string uri = m_ctxt->getSourceFiles()->getFileUri(m->loc().fileid);
+        SourceFileData *file = m_ctxt->getSourceFiles()->getFile(uri);
+
+        zsp::parser::IMarkerUP mc(m->clone());
+        file->addLinkMarker(mc, false);
+    } else {
+        DEBUG("Fileid %s is no recognized", m->loc().fileid);
+    }
 
     DEBUG_LEAVE("marker: %s", m->msg().c_str());
 }

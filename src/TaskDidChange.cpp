@@ -23,6 +23,7 @@
 #include "TaskDidChange.h"
 #include "TaskPublishDiagnostics.h"
 #include "TaskUpdateSourceFileData.h"
+#include "TaskUpdateFileSymtab.h"
 
 
 namespace zsp {
@@ -47,7 +48,7 @@ jrpc::ITask *TaskDidChange::run(jrpc::ITask *parent, bool initial) {
 
     switch (m_idx) {
         case 0: {
-            m_idx = 1;
+            m_idx++;
 
             jrpc::ITask *n = jrpc::TaskLockWrite(m_queue, m_ctxt->getSourceFiles()->getLock()).run(this, true);
 
@@ -63,7 +64,7 @@ jrpc::ITask *TaskDidChange::run(jrpc::ITask *parent, bool initial) {
         }
 
         case 1: {
-            m_idx = 2;
+            m_idx++;
 
             if (m_ctxt->getSourceFiles()->hasFile(m_uri)) {
                 m_file = m_ctxt->getSourceFiles()->getFile(m_uri);
@@ -80,7 +81,22 @@ jrpc::ITask *TaskDidChange::run(jrpc::ITask *parent, bool initial) {
         }
 
         case 2: {
-            m_idx = 3;
+            m_idx++;
+            
+            // If the live file doesn't have syntax errors, proceed to build
+            // the file view of the symbol table
+            if (!m_file->hasSeverity(parser::MarkerSeverityE::Error, true)) {
+                DEBUG("UpdateFileSymtab");
+                jrpc::ITask *n = TaskUpdateFileSymtab(m_ctxt, m_uri).run(this, true);
+                
+                if (n && !n->done()) {
+                    break;
+                }
+            }
+        }
+
+        case 3: {
+            m_idx++;
             if (m_file) {
                 jrpc::ITask *n = TaskPublishDiagnostics(m_ctxt, m_file, true).run(this, true);
                 
@@ -90,13 +106,13 @@ jrpc::ITask *TaskDidChange::run(jrpc::ITask *parent, bool initial) {
             }
         }
 
-        case 3: {
+        case 4: {
             m_ctxt->getSourceFiles()->getLock()->unlock_write();
             setFlags(jrpc::TaskFlags::Complete);
         }
     }
 
-    DEBUG_LEAVE("run");
+    DEBUG_LEAVE("run %d", m_idx);
     return runLeave(parent, initial);
 }
 

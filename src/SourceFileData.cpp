@@ -31,7 +31,9 @@ SourceFileData::SourceFileData(
         m_uri(uri), m_id(-1), m_timestamp(timestamp),
         m_haveMarkers(false) {
     memset(m_has, 0, sizeof(m_has));
+    memset(m_hasLink, 0, sizeof(m_hasLink));
     memset(m_hasLive, 0, sizeof(m_hasLive));
+    memset(m_hasLinkLive, 0, sizeof(m_hasLinkLive));
 }
 
 SourceFileData::~SourceFileData() {
@@ -64,10 +66,10 @@ void SourceFileData::addSyntaxMarker(zsp::parser::IMarkerUP &marker, bool live) 
 
 void SourceFileData::addLinkMarker(zsp::parser::IMarkerUP &marker, bool live) {
     if (live) {
-        m_hasLive[(int)marker->severity()]++;
+        m_hasLinkLive[(int)marker->severity()]++;
         m_linkMarkersLive.push_back(std::move(marker));
     } else {
-        m_has[(int)marker->severity()]++;
+        m_hasLink[(int)marker->severity()]++;
         m_linkMarkers.push_back(std::move(marker));
     }
 }
@@ -82,6 +84,10 @@ void SourceFileData::addSemanticMarker(zsp::parser::IMarkerUP &marker, bool live
     }
 }
 
+ast::IGlobalScope *SourceFileData::getLastGoodAst() {
+    return 0;
+}
+
 void SourceFileData::closeLiveView() {
     // Clear live markers
     m_syntaxMarkersLive.clear();
@@ -94,3 +100,4 @@ void SourceFileData::closeLiveView() {
 
 }
 }
+

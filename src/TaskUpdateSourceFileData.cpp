@@ -94,6 +94,7 @@ jrpc::ITask *TaskUpdateSourceFileData::run(jrpc::ITask *parent, bool initial) {
     if (m_update_live) {
         // Handle last-good here?
         if (m_diagnostics.size() == 0) {
+            DEBUG("Set Live AST for %s", m_file->getUri().c_str());
             m_file->setLiveAst(global);
         }
     } else {
