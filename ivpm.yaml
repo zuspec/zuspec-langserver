@@ -30,5 +30,7 @@ package:
        src: pypi
      - name: pygls
        url: https://github.com/openlawlibrary/pygls.git
+     - name: vscode-pss-support
+       url: https://github.com/PSSTools/vscode-pss-support.git
 
   

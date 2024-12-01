@@ -38,6 +38,7 @@ def langserver():
     thread_main.start()
 
     loop.run_until_complete(client.wait_connection())
+#    client.write("Hello World".encode());
 
     yield (client, thread_main)
 
@@ -103,8 +104,9 @@ component comp2 {
         root_uri=rundir,
         root_path=rundir,
         )
+    print("--> Send init request", flush=True)
     result = loop.run_until_complete(client.initialize_async(params))
-    print("result: %s" % str(result))
+    print("<-- SEnd init request result: %s" % str(result), flush=True)
 
     print("--> SendInitialized", flush=True)
     params = lsprotocol.types.InitializedParams()

@@ -95,12 +95,12 @@ jrpc::ITask *TaskUpdateFileSymtab::run(jrpc::ITask *parent, bool initial) {
 void TaskUpdateFileSymtab::marker(const zsp::parser::IMarker *m) {
     DEBUG_ENTER("marker");
     // Only save messages specific to this file
-    if (m->loc().fileid == m_file->getId()) {
-        zsp::parser::IMarkerUP mc(m->clone());
-        m_file->addLinkMarker(mc, true);        
-    } else {
-        DEBUG("Not from the target file");
-    }
+    // if (m->loc().fileid == m_file->getId()) {
+    //     zsp::parser::IMarkerUP mc(m->clone());
+    //     m_file->addLinkMarker(mc, true);        
+    // } else {
+    //     DEBUG("Not from the target file");
+    // }
     DEBUG_LEAVE("marker");
 }
 

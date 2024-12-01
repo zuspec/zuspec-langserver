@@ -61,6 +61,11 @@ public:
 
 	virtual bool hasSeverity(zsp::parser::MarkerSeverityE s) override;
 
+    static ast::IGlobalScope *getResult(jrpc::TaskResult &res) {
+        ast::IGlobalScope *ret = res.val.p ? reinterpret_cast<ast::IGlobalScope *>(res.val.p) : 0;
+        return ret;
+    }
+
 private:
     static dmgr::IDebug                 *m_dbg;
     Context                             *m_ctxt;

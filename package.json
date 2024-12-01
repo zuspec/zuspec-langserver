@@ -1,0 +1,6 @@
+{
+    "scripts": {
+        "compile": "tsc -b",
+        "watch": "tsc -b -w"
+    }
+}

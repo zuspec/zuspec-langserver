@@ -52,6 +52,7 @@ private:
     int32_t                                         m_idx;
     std::vector<std::string>                        m_roots;
     std::unique_ptr<std::vector<std::string>>       m_files;
+    std::vector<ast::IGlobalScope *>                m_file_asts;
 
 };
 

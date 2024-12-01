@@ -84,10 +84,6 @@ void SourceFileData::addSemanticMarker(zsp::parser::IMarkerUP &marker, bool live
     }
 }
 
-ast::IGlobalScope *SourceFileData::getLastGoodAst() {
-    return 0;
-}
-
 void SourceFileData::closeLiveView() {
     // Clear live markers
     m_syntaxMarkersLive.clear();
@@ -96,6 +92,7 @@ void SourceFileData::closeLiveView() {
 
     m_liveContent.clear();
     m_liveAst.reset();
+    m_isOpen = false;
 }
 
 }

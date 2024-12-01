@@ -19,6 +19,8 @@
  *     Author: 
  */
 #include <string>
+#include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 #include "dmgr/FactoryExt.h"
 #include "dmgr/impl/DebugMacros.h"
@@ -32,6 +34,8 @@
 #include <sys/un.h>
 #include "Server.h"
 
+#define USE_STDIO
+
 static dmgr::IDebug             *m_dbg = 0;
 
 using namespace zsp::ls;
@@ -39,6 +43,7 @@ using namespace zsp::ls;
 extern "C" zsp::ast::IFactory *ast_getFactory();
 
 int main(int argc, char **argv) {
+    char tmp[1024];
     dmgr::IFactory *dmgr_f = dmgr_getFactory();
 
     jrpc::IFactory *jrpc_f = jrpc_getFactory();
@@ -59,15 +64,44 @@ int main(int argc, char **argv) {
 
     DEBUG_INIT("zsp-langserver", dmgr);
 
+/*
+    {
+        int count = 20;
+        do {
+            DEBUG("sleep");
+            sleep(1);
+        } while (count--);
+    }
+ */
+
     dmgr->registerSignalHandlers();
     dmgr->enable(true);
 
-    DEBUG("Hello");
+    getcwd(tmp, sizeof(tmp));
+    DEBUG("Hello: %s", tmp);
+    fflush(log_fp);
 
     jrpc::IEventLoopUP loop(jrpc_f->mkEventLoop());
-    jrpc::IMessageTransportUP transport(jrpc_f->mkStdioMessageTransport(
+
+    jrpc::IMessageTransportUP transport;
+    if (getenv("ZSP_LSP_PORT") && getenv("ZSP_LSP_PORT")[0]) {
+        int port = strtoul(getenv("ZSP_LSP_PORT"), 0, 0);
+        transport = jrpc::IMessageTransportUP(jrpc_f->mkNBSocketMessageTransport(
+            loop.get(),
+            jrpc_f->mkSocketClientConnection(port)
+        ));
+    } else {
+#ifdef USE_STDIO
+    transport = jrpc::IMessageTransportUP(jrpc_f->mkStdioMessageTransport(
         loop.get()
     ));
+#else
+    std::pair<int32_t,int32_t> conn = jrpc_f->mkSocketServer(6000);
+    transport = jrpc::IMessageTransportUP(jrpc_f->mkNBSocketMessageTransport(
+        loop.get(),
+        conn.second));
+#endif
+    }
 
     zsp::ast::IFactory *zsp_ast_f = ast_getFactory();
     zsp::parser::IFactory *zsp_parser_f = zsp_parser_getFactory();

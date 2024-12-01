@@ -90,6 +90,7 @@ private:
     zsp::parser::IFactory                       *m_zspp_f;
     std::vector<zsp::parser::IAstBuilderUP>     m_ast_builders;
     std::mutex                                  m_mutex;
+    ast::IRootSymbolScopeUP                     m_root;
     SourceFileCollectionUP                      m_src_c;
 
 };

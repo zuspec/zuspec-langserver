@@ -1,0 +1,13 @@
+{
+    "include": [
+
+    ],
+    "exclude": [
+        "packages",
+        "vscode"
+    ],
+    "references": [
+        {"path": "./vscode/zuspec-langserver"},
+        {"path": "./packages/vscode-pss-support"},
+    ]
+}

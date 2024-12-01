@@ -51,10 +51,10 @@ TaskUpdateSourceFileData::~TaskUpdateSourceFileData() {
 }
 
 jrpc::ITask *TaskUpdateSourceFileData::run(jrpc::ITask *parent, bool initial) {
-    DEBUG_ENTER("run fileid: %d", m_file->getId());
+    DEBUG_ENTER("run %s", m_file->getUri().c_str());
     runEnter(parent, initial);
-    zsp::ast::IGlobalScopeUP global(
-        m_ctxt->getAstFactory()->mkGlobalScope(m_file->getId()));
+    zsp::ast::IGlobalScopeUP global(m_ctxt->getAstFactory()->mkGlobalScope(-1));
+    global->setFilename(m_file->getUri());
     zsp::parser::IAstBuilder *builder = m_ctxt->allocAstBuilder();
     builder->setMarkerListener(this);
     builder->setCollectDocStrings(true);
@@ -99,7 +99,7 @@ jrpc::ITask *TaskUpdateSourceFileData::run(jrpc::ITask *parent, bool initial) {
         }
     } else {
         DEBUG("Set Static AST for %s (%p)", m_file->getUri().c_str(), global.get());
-        m_file->setStaticAst(global);
+        setResult(jrpc::TaskResult(global.release(), true));
     }
 
     // We need to publish diagnostics if we have new ones (from the parse)

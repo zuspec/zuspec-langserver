@@ -27,8 +27,9 @@ namespace ls {
 
 
 TaskLinkAst::TaskLinkAst(
-    Context                             *ctxt,
-    const std::vector<std::string>      &files) : TaskBase(ctxt->getQueue()),
+    Context                                 *ctxt,
+    const std::vector<ast::IGlobalScope *>  &files,
+    bool                                    own_files) : TaskBase(ctxt->getQueue()),
     m_ctxt(ctxt), m_files(files.begin(), files.end()) {
     DEBUG_INIT("zsp::ls::TaskLinkAst", ctxt->getDebugMgr());
 }
@@ -39,21 +40,14 @@ TaskLinkAst::~TaskLinkAst() {
 
 jrpc::ITask *TaskLinkAst::run(jrpc::ITask *parent, bool initial) {
     runEnter(parent, initial);
-    std::vector<zsp::ast::IGlobalScope *> files;
-
-    for (std::vector<std::string>::const_iterator
-        it=m_files.begin();
-        it!=m_files.end(); it++) {
-        files.push_back(m_ctxt->getSourceFiles()->getFile(*it)->getStaticAst());
-    }
 
     zsp::parser::ILinkerUP linker(m_ctxt->getParserFactory()->mkAstLinker());
 
     zsp::ast::IRootSymbolScopeUP root(linker->link(
         this,
-        files));
+        m_files));
 
-    m_ctxt->getSourceFiles()->setRoot(root);
+    setResult(jrpc::TaskResult(root.release(), true));
 
     setFlags(jrpc::TaskFlags::Complete);
 

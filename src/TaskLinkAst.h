@@ -33,8 +33,9 @@ class TaskLinkAst :
     public virtual jrpc::TaskBase {
 public:
     TaskLinkAst(
-        Context                             *ctxt,
-        const std::vector<std::string>      &files);
+        Context                                 *ctxt,
+        const std::vector<ast::IGlobalScope *>  &files,
+        bool                                    own_files);
 
     TaskLinkAst(TaskLinkAst *o) : TaskBase(o),
         m_ctxt(o->m_ctxt), m_files(o->m_files.begin(), o->m_files.end()) { }
@@ -51,10 +52,14 @@ public:
 
 	virtual bool hasSeverity(zsp::parser::MarkerSeverityE s) override;
 
+    static ast::IRootSymbolScope *getResult(const jrpc::TaskResult &result) {
+        return (result.val.p)?reinterpret_cast<ast::IRootSymbolScope *>(result.val.p):0;
+    }
+
 private:
     static dmgr::IDebug                 *m_dbg;
     Context                             *m_ctxt;
-    std::vector<std::string>            m_files;
+    std::vector<ast::IGlobalScope *>    m_files;
 
 };
 

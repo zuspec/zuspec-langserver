@@ -38,9 +38,9 @@ SourceFileCollection::~SourceFileCollection() {
 
 int32_t SourceFileCollection::addFile(SourceFileDataUP &file) {
     int32_t id = m_file_l.size();
-    file->setId(id);
-    m_uri_id_m.insert({file->getUri(), file->getId()});
-    m_id_uri_m.insert({file->getId(), file->getUri()});
+    file->setFileId(id);
+    m_uri_id_m.insert({file->getUri(), id});
+    m_id_uri_m.insert({id, file->getUri()});
     m_file_l.push_back(std::move(file));
     return id;
 }

@@ -1,5 +1,6 @@
 
 import asyncio
+import json
 import os
 import re
 import debug_mgr.core as dmgr
@@ -40,19 +41,28 @@ class SocketClient(BaseLanguageClient):
     
     def handle_connection(self, reader, writer):
         print("handle_connection")
-        self.connected = True
-        self.connected_ev.set()
+        try:
+            self.connected = True
+            self.connected_ev.set()
 
-        self.writer = writer
-        self.reader = reader
-        self.protocol.connection_made(writer)
+            self.writer = writer
+            self.reader = reader
+            self.protocol.set_writer(writer)
+        except Exception as e:
+            print("Exception1: %s" % str(e), flush=True)
 
-        self._stop_event = asyncio.Event()
-        asyncio.create_task(
-            self._readline(
-                self._stop_event, 
-                reader, 
-                self.protocol.data_received))
+        try:
+            self._stop_event = asyncio.Event()
+            tasks = set()
+            readline_t = asyncio.create_task(
+                self._readline(
+                    self._stop_event, 
+                    reader, 
+                    self.protocol.handle_message))
+            tasks.add(readline_t)
+            readline_t.add_done_callback(tasks.discard)
+        except Exception as e:
+            print("Exception2: %s" % str(e), flush=True)
         
     def write(self, data):
         print("Write: \"%s\"" % str(data), flush=True)
@@ -65,6 +75,8 @@ class SocketClient(BaseLanguageClient):
         message = []
         content_length = 0
 
+        print("_readline is_set=%s" % stop_event.is_set(), flush=True)
+
         while not stop_event.is_set():
             # Read a header line
             header = await reader.readline()
@@ -74,6 +86,7 @@ class SocketClient(BaseLanguageClient):
 
             # Extract content length if possible
             if not content_length:
+                print("check header %s" % header, flush=True)
                 match = CONTENT_LENGTH_PATTERN.fullmatch(header)
                 if match:
                     content_length = int(match.group(1))
@@ -81,14 +94,32 @@ class SocketClient(BaseLanguageClient):
 
             # Check if all headers have been read (as indicated by an empty line \r\n)
             if content_length and not header.strip():
-                # Read body
-                body = await reader.readexactly(content_length)
-                if not body:
-                    break
-                message.append(body)
+                try:
+                    # Read body
+                    body = await reader.readexactly(content_length)
+                    if not body:
+                        break
+                    message.append(body)
 
-                # Pass message to protocol
-                msg_handler(b"".join(message))
+                    message_s = b"".join(message).decode()
+
+                    # Pass message to protocol
+                    print("--> msg_handler %s" % message_s, flush=True)
+
+                    # Need to trim the header
+                    lcb_idx = message_s.find('{')
+                    if lcb_idx != -1:
+                        message_s = message_s[lcb_idx:]
+                    print("trimmed message: %s" % message_s, flush=True)
+                    msg_j = json.loads(message_s)
+
+                    msg = self.protocol.structure_message(msg_j)
+
+                    self.protocol.handle_message(msg)
+
+                    print("<--> msg_handler %s" % message, flush=True)
+                except Exception as e:
+                    print("Exception: %s" % str(e), flush=True)
 
                 # Reset the buffer
                 message = []

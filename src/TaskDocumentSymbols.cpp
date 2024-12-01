@@ -56,15 +56,21 @@ jrpc::ITask *TaskDocumentSymbols::run(jrpc::ITask *parent, bool initial) {
             ast::IGlobalScope *ast = 0;
             m_idx = 2;
             if (m_ctxt->getSourceFiles()->hasFile(m_uri)) {
+                DEBUG("Has source file");
                 SourceFileData *file = m_ctxt->getSourceFiles()->getFile(m_uri);
                 if (file->getLiveAst()) {
+                    DEBUG("Has live AST");
                     ast = file->getLiveAst();
                 } else {
-                    ast = file->getStaticAst();
+                    DEBUG("TODO: Use static AST");
+//                    ast = file->getStaticAst();
                 }
+            } else {
+                DEBUG("Doesn't have source file");
             }
 
             lls::IDocumentSymbolResponseUP response;
+            DEBUG("ast: %p", ast);
             if (ast) {
                 TaskBuildDocumentSymbols builder(m_ctxt->getLspFactory());
                 response = builder.build(ast);

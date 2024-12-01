@@ -45,12 +45,12 @@ public:
         return m_uri;
     }
 
-    virtual int32_t getId() const {
-        return m_id;
+    virtual void setFileId(int32_t id) {
+        m_id = id;
     }
 
-    virtual void setId(int32_t id)  {
-        m_id = id;
+    virtual int32_t getFileId() const {
+        return m_id;
     }
 
     virtual int64_t getTimestamp() const {
@@ -71,16 +71,6 @@ public:
 
     virtual void setLiveContent(const std::string &c) {
         m_liveContent = c;
-    }
-
-    virtual ast::IGlobalScope *getLastGoodAst();
-
-    virtual zsp::ast::IGlobalScope *getStaticAst() const {
-        return m_staticAst.get();
-    }
-
-    virtual void setStaticAst(zsp::ast::IGlobalScopeUP &ast) {
-        m_staticAst = std::move(ast);
     }
 
     virtual zsp::ast::IGlobalScope *getLiveAst() const {
@@ -139,8 +129,6 @@ private:
     int64_t                                 m_timestamp;
     bool                                    m_isOpen;
     std::string                             m_liveContent;
-    zsp::ast::IGlobalScopeUP                m_staticAst;
-    zsp::ast::IGlobalScopeUP                m_lastGoodLiveAst;
     zsp::ast::IGlobalScopeUP                m_liveAst;
     zsp::ast::IRootSymbolScopeUP            m_fileSymtab;
     int32_t                                 m_fileSymtabVersion;

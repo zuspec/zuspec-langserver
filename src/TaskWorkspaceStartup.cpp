@@ -123,28 +123,22 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
                 }
 
                 SourceFileData *file = m_ctxt->getSourceFiles()->getFile(*f_it);
-                TaskUpdateSourceFileData(m_ctxt, file, false).run(this, true);
+                TaskUpdateSourceFileData(
+                    m_ctxt, 
+                    file,
+                    false).run(this, true);
+                ast::IGlobalScope *ast = TaskUpdateSourceFileData::getResult(moveResult());
+                ast->setFileid(file->getFileId());
+                m_file_asts.push_back(ast);
             }
 #endif
         }
 
-        case 3: { // If no parse errors, create a linked representation
+        case 3: { // Trust that any provided AST content is okay
             std::vector<std::string> link_files;
-            m_idx = 4;
+            m_idx++;
 
-            bool have_errors = false;
-            for (std::vector<std::string>::const_iterator
-                f_it=m_files->begin();
-                f_it!=m_files->end(); f_it++) {
-                SourceFileData *file = m_ctxt->getSourceFiles()->getFile(*f_it);
-                if (!file->hasSeverity(zsp::parser::MarkerSeverityE::Error, false)) {
-                    link_files.push_back(file->getUri());
-                } else {
-                    have_errors = true;
-                }
-            }
-
-            jrpc::ITask *n = TaskLinkAst(m_ctxt, link_files).run(this, true);
+            jrpc::ITask *n = TaskLinkAst(m_ctxt, m_file_asts, true).run(this, true);
 
             if (n && !n->done()) {
                 break;
@@ -152,7 +146,10 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
         }
 
         case 4: { // Report any errors
-            m_idx = 5;
+            m_idx++;
+
+            ast::IRootSymbolScopeUP root = ast::IRootSymbolScopeUP(TaskLinkAst::getResult(moveResult()));
+            m_ctxt->getSourceFiles()->setRoot(root);
 
             for (std::vector<std::string>::const_iterator
                 f_it=m_files->begin();
