@@ -23,11 +23,13 @@ jobs:
         env:
           IVPM_PYTHON: /opt/python/cp312-cp312/bin/python
           BUILD_NUM: ${{ github.run_id }}
+          CI_BUILD: 1
         run: >
           docker run --rm
           --volume "$(pwd):/io"
           --env IVPM_PYTHON
           --env BUILD_NUM
+          --env CI_BUILD
           --workdir /io
           quay.io/pypa/manylinux2014_x86_64
           /io/scripts/build_linux.sh
