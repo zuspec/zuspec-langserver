@@ -13,6 +13,12 @@ jobs:
         run: |
           sudo apt-get install npm
           sudo npm install typescript
+          sudo npm install n
+          sudo n stable
+          sudo npm install -g @vscode/vsce
+      - name: Check VSCode
+        run: |
+          node --version
       - name: Build packages
         env:
           IVPM_PYTHON: /opt/python/cp312-cp312/bin/python
@@ -25,6 +31,13 @@ jobs:
           --workdir /io
           quay.io/pypa/manylinux2014_x86_64
           /io/scripts/build_linux.sh
+      - name: Build VSCode Extension
+        run: |
+          npm --version
+          cp -r zuspec-langserver-*/* vscode/zuspec-langserver
+          cd vscode/zuspec-langserver
+          vsce package 0.0.1
+          vsce publish -p ${{ secrets.AZURE_API_TOKEN }} --no-git-tag-version patch
     #   - name: Publish to PyPi
     #     if: startsWith(github.ref, 'refs/heads/main')
     #     env:

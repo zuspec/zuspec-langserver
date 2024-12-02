@@ -91,6 +91,8 @@ private:
     std::vector<zsp::parser::IAstBuilderUP>     m_ast_builders;
     std::mutex                                  m_mutex;
     ast::IRootSymbolScopeUP                     m_root;
+
+    // Holds the list of known sources
     SourceFileCollectionUP                      m_src_c;
 
 };
