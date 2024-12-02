@@ -64,7 +64,9 @@ if test $? -ne 0; then exit 1; fi
 cp ${packages}/zuspec-parser/build/lib/libantlr4-runtime.so.* ${inst_prefix}/lib
 if test $? -ne 0; then exit 1; fi
 
-ln -s ${inst_prefix}/lib/libantlr4-runtime.so.* ${inst_prefix}/lib/libantlr4-runtime.so
+cwd=$(pwd)
+cd ${inst_prefix}/lib
+ln -s libantlr4-runtime.so.* libantlr4-runtime.so
 if test $? -ne 0; then exit 1; fi
 
 patchelf --set-rpath '$ORIGIN/../lib' ${inst_prefix}/bin/zsp-langserver
