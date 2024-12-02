@@ -38,6 +38,8 @@ jobs:
           npm --version
           cp -r zuspec-langserver-*/* vscode/zuspec-langserver
           cd vscode/zuspec-langserver
+          npm install
+          npm run compile
           vsce package 0.0.1
           vsce publish -p ${{ secrets.AZURE_API_TOKEN }} --no-git-tag-version patch
     #   - name: Publish to PyPi
