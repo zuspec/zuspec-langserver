@@ -3,7 +3,7 @@
   "publisher": "zuspec",
   "displayName": "Zuspec PSS Language Server",
   "description": "Language server for PSS source",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "repository": {
     "url": "https://github.com/zuspec/zuspec-langserver"
   },
