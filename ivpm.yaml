@@ -19,7 +19,7 @@ package:
      - name: zuspec-parser
        url: https://github.com/zuspec/zuspec-parser.git
      - name: gtest
-       url: https://github.com/google/googletest/archive/release-1.10.0.tar.gz
+       url: https://github.com/google/googletest/archive/refs/tags/release-1.12.0.tar.gz
      - name: ninja
        src: pypi
      - name: cython

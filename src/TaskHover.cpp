@@ -22,6 +22,7 @@
 #include "jrpc/impl/TaskLockRead.h"
 #include "zsp/parser/impl/TaskResolveSymbolPathRef.h"
 #include "TaskHover.h"
+#include "TaskUpdateFileSymtab.h"
 
 
 namespace zsp {
@@ -35,7 +36,7 @@ TaskHover::TaskHover(
     int32_t             lineno,
     int32_t             linepos) : TaskBase(ctxt->getQueue()),
     m_id(id), m_ctxt(ctxt), m_idx(0), m_uri(uri),
-    m_lineno(lineno), m_linepos(linepos) {
+    m_symtab(0), m_lineno(lineno), m_linepos(linepos) {
     DEBUG_INIT("zsp::ls::TaskHover", ctxt->getDebugMgr());
 
 }
@@ -60,25 +61,43 @@ jrpc::ITask *TaskHover::run(jrpc::ITask *parent, bool initial) {
         case 1: {
             m_idx++;
             lls::IFactory *factory = m_ctxt->getLspFactory();
-            parser::ITaskFindElementByLocation::Result res;
-            res.isValid = false;
 
             if (m_ctxt->getSourceFiles()->hasFile(m_uri)) {
                 SourceFileData *file = m_ctxt->getSourceFiles()->getFile(m_uri);
-                ast::ISymbolScope *symtab = file->getFileSymtab();
+                m_symtab = file->getFileSymtab();
 
-                if (symtab && file->getLiveAst()) {
-                    parser::ITaskFindElementByLocationUP finder(
-                     m_ctxt->getParserFactory()->mkTaskFindElementByLocation());
-                    DEBUG("Search for %d:%d", m_lineno, m_linepos);
-                    // Using fuzz of 2 here to give a bit more flexibility which
-                    // helps with single-character identifiers
-                    res = finder->find(
-                        symtab, 
-                        file->getLiveAst(), m_lineno+1, 
-                        m_linepos+1, 
-                        2);
+                if (!m_symtab) {
+                    // Need to rebuild it now
+                    jrpc::ITask *n = TaskUpdateFileSymtab(m_ctxt, m_uri, false).run(this, 1);
+
+                    if (n && !n->done()) {
+                        break;
+                    }
                 }
+            } else {
+                DEBUG("File %s is not present", m_uri.c_str());
+            }
+        }
+
+        case 2: {
+            lls::IFactory *factory = m_ctxt->getLspFactory();
+            SourceFileData *file = m_ctxt->getSourceFiles()->getFile(m_uri);
+            parser::ITaskFindElementByLocation::Result res;
+            res.isValid = false;
+
+            m_idx++;
+
+            if (m_symtab && file->getLiveAst()) {
+                parser::ITaskFindElementByLocationUP finder(
+                m_ctxt->getParserFactory()->mkTaskFindElementByLocation());
+                DEBUG("Search for %d:%d", m_lineno, m_linepos);
+                // Using fuzz of 2 here to give a bit more flexibility which
+                // helps with single-character identifiers
+                res = finder->find(
+                    m_symtab, 
+                    file->getLiveAst(), m_lineno+1, 
+                    m_linepos+1, 
+                    2);
             } else {
                 DEBUG("File %s is not present", m_uri.c_str());
             }
@@ -104,7 +123,7 @@ jrpc::ITask *TaskHover::run(jrpc::ITask *parent, bool initial) {
                     factory->mkHover(content, range).release());
             }
         }
-        case 2: {
+        case 3: {
             // All Done
             m_ctxt->getSourceFiles()->getLock()->unlock_read();
             setFlags(jrpc::TaskFlags::Complete);

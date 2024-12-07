@@ -81,12 +81,24 @@ public:
         m_liveAst = std::move(ast);
     }
 
+    virtual ast::IGlobalScope *getDiskAst() const {
+        return m_diskAst.get();
+    }
+
+    virtual void setDiskAst(ast::IGlobalScopeUP &ast) {
+        m_diskAst = std::move(ast);
+    }
+
     virtual zsp::ast::ISymbolScope *getFileSymtab() {
         return m_fileSymtab.get();
     }
 
     virtual void setFileSymtab(zsp::ast::IRootSymbolScopeUP &symt) {
         m_fileSymtab = std::move(symt);
+    }
+    
+    virtual void clrFileSymtab() {
+        m_fileSymtab.reset();
     }
 
     virtual bool haveMarkers() const {
@@ -97,7 +109,9 @@ public:
         m_haveMarkers = h;
     }
 
-    virtual void clearMarkers(bool live);
+    virtual void clearLinkMarkers(bool live);
+
+    virtual void clearSyntaxMarkers(bool live);
 
     virtual void addSyntaxMarker(zsp::parser::IMarkerUP &marker, bool live);
 
@@ -130,6 +144,7 @@ private:
     bool                                    m_isOpen;
     std::string                             m_liveContent;
     zsp::ast::IGlobalScopeUP                m_liveAst;
+    ast::IGlobalScopeUP                     m_diskAst;
     zsp::ast::IRootSymbolScopeUP            m_fileSymtab;
     int32_t                                 m_fileSymtabVersion;
     bool                                    m_haveMarkers;

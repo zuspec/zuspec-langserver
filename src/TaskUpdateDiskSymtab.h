@@ -1,5 +1,5 @@
 /**
- * TestTaskBase.h
+ * TaskUpdateDiskSymtab.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -19,43 +19,35 @@
  *     Author: 
  */
 #pragma once
-#include "jrpc/ITaskQueue.h"
+#include "jrpc/impl/TaskBase.h"
 #include "Context.h"
-#include "SourceFileCollection.h"
-#include "TaskSchedulerFixture.h"
-#include "TestBase.h"
-#include "TestClient.h"
 
 namespace zsp {
 namespace ls {
 
 
 
-class TestTaskBase : public TestBase {
+class TaskUpdateDiskSymtab :
+    public virtual jrpc::TaskBase {
 public:
-    TestTaskBase();
+    TaskUpdateDiskSymtab(Context *ctxt, bool lock);
 
-    virtual ~TestTaskBase();
+    TaskUpdateDiskSymtab(TaskUpdateDiskSymtab *o) : TaskBase(o),
+        m_ctxt(o->m_ctxt), m_lock(o->m_lock), m_idx(o->m_idx) { }
 
-    virtual void SetUp() override;
+    virtual ~TaskUpdateDiskSymtab();
 
-    virtual void TearDown() override;
+    virtual TaskUpdateDiskSymtab *clone() override {
+        return new TaskUpdateDiskSymtab(this);
+    }
 
-    void initWorkspace(
-        const std::vector<std::pair<std::string,std::string>>   &files);
+    virtual jrpc::ITask *run(jrpc::ITask *parent, bool initial) override;
 
-    void saveFile(
-        const std::string   &name,
-        const std::string   &content);
-
-    bool runTasks(int32_t max=0);
-
-protected:
-    jrpc::ITaskQueueUP          m_queue;
-    TaskSchedulerFixture        m_scheduler;
-    ContextUP                   m_ctxt;
-    TestClient                  m_client;
-
+private:
+    static dmgr::IDebug             *m_dbg;
+    Context                         *m_ctxt;
+    bool                            m_lock;
+    int32_t                         m_idx;
 };
 
 }

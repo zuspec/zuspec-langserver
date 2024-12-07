@@ -22,6 +22,7 @@
 #include "jrpc/impl/TaskLockRead.h"
 #include "zsp/parser/impl/TaskResolveSymbolPathRef.h"
 #include "TaskDeclaration.h"
+#include "TaskUpdateFileSymtab.h"
 
 
 namespace zsp {
@@ -62,13 +63,28 @@ jrpc::ITask *TaskDeclaration::run(jrpc::ITask *parent, bool initial) {
             m_idx++;
             // Now that we have the source index locked, 
             // find the indicated location
-            parser::ITaskFindElementByLocation::Result res;
-            res.isValid = false;
-
             if (m_ctxt->getSourceFiles()->hasFile(m_uri)) {
                 SourceFileData *file = m_ctxt->getSourceFiles()->getFile(m_uri);
-                ast::ISymbolScope *symtab = file->getFileSymtab();
 
+                if (!file->getFileSymtab()) {
+                    jrpc::ITask *n = TaskUpdateFileSymtab(m_ctxt, m_uri, false).run(this, 1);
+
+                    if (n && !n->done()) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        case 2: {
+            SourceFileData *file = m_ctxt->getSourceFiles()->getFile(m_uri);
+            parser::ITaskFindElementByLocation::Result res;
+            ast::ISymbolScope *symtab = file->getFileSymtab();
+            res.isValid = false;
+
+            m_idx++;
+
+            if (symtab) {
                 parser::ITaskFindElementByLocationUP finder(
                     m_ctxt->getParserFactory()->mkTaskFindElementByLocation());
                 DEBUG("Search for %d:%d", m_lineno+1, m_linepos+1);

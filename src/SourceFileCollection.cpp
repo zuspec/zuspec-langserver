@@ -64,6 +64,7 @@ bool SourceFileCollection::tryLockFile(
     DEBUG_ENTER("tryLockFile");
 
     DEBUG_LEAVE("tryLockFile");
+    return false;
 }
 
 void SourceFileCollection::updateLiveContent(

@@ -37,7 +37,6 @@ TaskUpdateSourceFileData::TaskUpdateSourceFileData(
     bool                            update_live) : TaskBase(ctxt->getQueue()),
         m_ctxt(ctxt), m_file(file), m_update_live(update_live) {
     DEBUG_INIT("TaskUpdateSourceFileData", ctxt->getDebugMgr());
-    DEBUG("src.getLiveContent.size()=%d", file->getLiveContent().size());
 }
 
 TaskUpdateSourceFileData::TaskUpdateSourceFileData(TaskUpdateSourceFileData *o) :
@@ -51,9 +50,10 @@ TaskUpdateSourceFileData::~TaskUpdateSourceFileData() {
 }
 
 jrpc::ITask *TaskUpdateSourceFileData::run(jrpc::ITask *parent, bool initial) {
-    DEBUG_ENTER("run %s", m_file->getUri().c_str());
+    DEBUG_ENTER("run %s update_live=%d", m_file->getUri().c_str(), m_update_live);
     runEnter(parent, initial);
-    zsp::ast::IGlobalScopeUP global(m_ctxt->getAstFactory()->mkGlobalScope(-1));
+    zsp::ast::IGlobalScopeUP global(
+        m_ctxt->getAstFactory()->mkGlobalScope(m_file->getFileId()));
     zsp::parser::IAstBuilder *builder = m_ctxt->allocAstBuilder();
     builder->setMarkerListener(this);
     builder->setCollectDocStrings(true);
@@ -66,7 +66,7 @@ jrpc::ITask *TaskUpdateSourceFileData::run(jrpc::ITask *parent, bool initial) {
         m_file->getUri().c_str(),
         m_file->getLiveContent().size());
 
-    m_file->clearMarkers(m_update_live);
+    m_file->clearSyntaxMarkers(m_update_live);
 
     if (m_update_live) {
         // We're working with live content
@@ -94,11 +94,15 @@ jrpc::ITask *TaskUpdateSourceFileData::run(jrpc::ITask *parent, bool initial) {
         // Handle last-good here?
         if (m_diagnostics.size() == 0) {
             DEBUG("Set Live AST for %s", m_file->getUri().c_str());
+
+            // We'll need to rebuild the file-specific sym tab because
+            // we've just deleted storage the symtab points to
+            m_file->clrFileSymtab();
             m_file->setLiveAst(global);
         }
     } else {
         DEBUG("Set Static AST for %s (%p)", m_file->getUri().c_str(), global.get());
-        setResult(jrpc::TaskResult(global.release(), true));
+        m_file->setDiskAst(global);
     }
 
     // We need to publish diagnostics if we have new ones (from the parse)

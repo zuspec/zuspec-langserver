@@ -41,7 +41,12 @@ void TestClient::init(dmgr::IDebugMgr *dmgr) {
 
 void TestClient::publishDiagnosticsNotification(
         lls::IPublishDiagnosticsParamsUP     &params) {
-    DEBUG_ENTER("publishDiagnosticNotification");
+    DEBUG_ENTER("publishDiagnosticNotification %d", params->getDiagnostics().size());
+    for (std::vector<lls::IDiagnosticUP>::const_iterator
+        it=params->getDiagnostics().begin();
+        it!=params->getDiagnostics().end(); it++) {
+        DEBUG("%s", (*it)->getMessage().c_str());
+    }
     m_diagnostics.push_back(std::move(params));
     DEBUG_LEAVE("publishDiagnosticNotification");
 }

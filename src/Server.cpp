@@ -30,6 +30,7 @@
 #include "TaskDidChange.h"
 #include "TaskDidClose.h"
 #include "TaskDidOpen.h"
+#include "TaskDidSave.h"
 #include "TaskHover.h"
 
 
@@ -41,7 +42,7 @@ Server::Server(
         jrpc::IEventLoop        *loop,
         lls::IFactory           *lls_factory,
         zsp::parser::IFactory   *parser_factory) : 
-            ServerBase(loop, lls_factory), 
+            ServerBase(loop, lls_factory), m_exited(false),
             m_queue(lls_factory->getFactory()->mkTaskQueue(loop)),
             m_ctxt(new Context(
                 lls_factory->getDebugMgr(),
@@ -87,7 +88,14 @@ void Server::initialize(
     const std::string           &id,
     lls::IInitializeParamsUP    &params) {
     lls::ITextDocumentSyncOptionsUP textDocSync(
-            m_factory->mkTextDocumentSyncOptions(true, lls::TextDocumentSyncKind::Incremental));
+            m_factory->mkTextDocumentSyncOptions(
+                true, 
+                lls::TextDocumentSyncKind::Incremental,
+                false, // will_save
+                false, // will_save_wait_until
+                true,  // save
+                false  // include_text
+                ));
     lls::IServerCapabilitiesUP capabilites(
         m_factory->mkServerCapabilities(
             textDocSync
@@ -148,6 +156,14 @@ void Server::didChange(lls::IDidChangeTextDocumentParamsUP &params) {
         params->getChanges().at(0)->getText()).run(0, true);
 
     DEBUG_LEAVE("didChange");
+}
+
+void Server::didSave(lls::IDidSaveTextDocumentParamsUP &params) {
+    DEBUG_ENTER("didSave");
+    TaskDidSave(
+        m_ctxt.get(), 
+        params->getTextDocument()->getUri()).run(0, true);
+    DEBUG_LEAVE("didSave");
 }
 
 void Server::didClose(lls::IDidCloseTextDocumentParamsUP &params) {
@@ -216,6 +232,13 @@ void Server::documentSymbols(
         id).run(0, true);
 
     DEBUG_LEAVE("documentSymbols");
+}
+
+void Server::shutdown(const std::string &id) {
+    DEBUG_ENTER("shutdown");
+    m_client->sendRspSuccess(id, nullptr);
+    m_exited = true;
+    DEBUG_LEAVE("shutdown");
 }
 
 dmgr::IDebug *Server::m_dbg = 0;

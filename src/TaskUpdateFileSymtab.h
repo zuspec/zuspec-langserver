@@ -33,11 +33,12 @@ class TaskUpdateFileSymtab :
 public:
     TaskUpdateFileSymtab(
         Context             *ctxt,
-        const std::string   &uri
+        const std::string   &uri,
+        bool                lock
     );
 
     TaskUpdateFileSymtab(TaskUpdateFileSymtab *o) : TaskBase(o),
-        m_ctxt(o->m_ctxt), m_file(o->m_file),
+        m_ctxt(o->m_ctxt), m_lock(o->m_lock), m_file(o->m_file),
         m_uri(o->m_uri), m_idx(o->m_idx) { }
 
     virtual ~TaskUpdateFileSymtab();
@@ -55,6 +56,7 @@ public:
 private:
     static dmgr::IDebug     *m_dbg;
     Context                 *m_ctxt;
+    bool                    m_lock;
     SourceFileData          *m_file;
     std::string             m_uri;
     int32_t                 m_idx;

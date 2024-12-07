@@ -41,6 +41,8 @@ public:
     
     virtual void init(lls::IClient *client) override;
 
+    bool exited() const { return m_exited; }
+
     virtual jrpc::ITaskQueue *getQueue() const { return m_queue.get(); }
 
     virtual void hover(
@@ -57,6 +59,8 @@ public:
 
     virtual void didChange(lls::IDidChangeTextDocumentParamsUP &params) override;
 
+    virtual void didSave(lls::IDidSaveTextDocumentParamsUP &params) override;
+
     virtual void didClose(lls::IDidCloseTextDocumentParamsUP &params) override;
 
     virtual void declaration(
@@ -71,8 +75,12 @@ public:
         const std::string               &id,
         lls::IDocumentSymbolParamsUP    &params) override;
 
+    virtual void shutdown(
+        const std::string               &id) override;
+
 protected:
     static dmgr::IDebug         *m_dbg;
+    bool                        m_exited;
     jrpc::ITaskQueueUP          m_queue;
     ContextUP                   m_ctxt;
     std::vector<std::string>    m_roots;

@@ -40,6 +40,7 @@ TaskPublishDiagnostics::~TaskPublishDiagnostics() {
 }
 
 jrpc::ITask *TaskPublishDiagnostics::run(jrpc::ITask *parent, bool initial) {
+    DEBUG_ENTER("run %s use_live=%d", m_file->getUri().c_str(), m_use_live);
     runEnter(parent, initial);
     std::vector<lls::IDiagnosticUP> diagnostics;
 
@@ -61,6 +62,7 @@ jrpc::ITask *TaskPublishDiagnostics::run(jrpc::ITask *parent, bool initial) {
 
     setFlags(jrpc::TaskFlags::Complete);
 
+    DEBUG_LEAVE("run");
     return runLeave(parent, initial);
 }
 

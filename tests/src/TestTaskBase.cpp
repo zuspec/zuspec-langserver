@@ -75,9 +75,41 @@ void TestTaskBase::initWorkspace(
 
 }
 
+void TestTaskBase::saveFile(
+        const std::string   &name,
+        const std::string   &content) {
+    std::string dir = dirname(name);
+    std::string file = basename(name);
+
+    if (dir == "") {
+        dir = m_testdir;
+    } else {
+        dir = m_testdir + "/" + dir;
+    }
+
+    if (!isdir(dir)) {
+        mkdir(dir);
+    }
+
+    std::string filename = dir + "/" + file;
+
+    FILE *fp = fopen(filename.c_str(), "w");
+    if (fp) {
+        fwrite(content.c_str(), 1, content.size(), fp);
+        fclose(fp);
+    } else {
+        fprintf(stdout, "Error: Failed to open %s\n", filename.c_str());
+        fflush(stdout);
+        exit(1);
+    }
+}
+
 bool TestTaskBase::runTasks(int32_t max) {
-    bool pend;
-    for (uint32_t i=0; (pend=m_queue->runOneTask()) && i < max; i++) { }
+    bool pend = false;
+    int32_t n_run = 0;
+    do {
+        while ((pend=m_queue->runOneTask()) && (!max || n_run++ < max)) { }
+    } while (m_scheduler.advance());
 
     return pend;
 }

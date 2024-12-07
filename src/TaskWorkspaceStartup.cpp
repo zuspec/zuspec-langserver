@@ -28,6 +28,7 @@
 #include "TaskPublishDiagnostics.h"
 #include "TaskWorkspaceStartup.h"
 #include "TaskUpdateSourceFileData.h"
+#include "TaskUpdateDiskSymtab.h"
 
 
 namespace zsp {
@@ -54,20 +55,11 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
         case 0: {
             DEBUG("Locking the source collection");
             // First, lock the source collection so we can update the filelist
-            m_idx = 1;
+            m_idx++;
 
             // Yield this task after startup
             jrpc::ITask *n = jrpc::TaskLockWrite(m_queue, m_ctxt->getSourceFiles()->getLock()).run(this, true);
 
-            /*
-            if (n && !n->done()) {
-                DEBUG("Not locked -- block");
-            } else {
-                DEBUG("Locked");
-                setFlags(jrpc::TaskFlags::Yield);
-            }
-            break;
-             */
             if (n && !n->done()) {
                 DEBUG("Waiting for Write lock");
                 break;
@@ -127,18 +119,19 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
                     m_ctxt, 
                     file,
                     false).run(this, true);
-                ast::IGlobalScope *ast = TaskUpdateSourceFileData::getResult(moveResult());
-                ast->setFileid(file->getFileId());
-                m_file_asts.push_back(ast);
+                m_file_asts.push_back(file->getDiskAst());
             }
 #endif
         }
 
         case 3: { // Trust that any provided AST content is okay
-            std::vector<std::string> link_files;
             m_idx++;
 
-            jrpc::ITask *n = TaskLinkAst(m_ctxt, m_file_asts, true).run(this, true);
+            // Drop the write lock on the source collection, since we only
+            // need to read files
+            m_ctxt->getSourceFiles()->getLock()->unlock_write();
+
+            jrpc::ITask *n = TaskUpdateDiskSymtab(m_ctxt, true).run(this, true);
 
             if (n && !n->done()) {
                 break;
@@ -148,23 +141,10 @@ jrpc::ITask *TaskWorkspaceStartup::run(jrpc::ITask *parent, bool initial) {
         case 4: { // Report any errors
             m_idx++;
 
-            ast::IRootSymbolScopeUP root = ast::IRootSymbolScopeUP(TaskLinkAst::getResult(moveResult()));
-            m_ctxt->getSourceFiles()->setRoot(root);
-
-            for (std::vector<std::string>::const_iterator
-                f_it=m_files->begin();
-                f_it!=m_files->end(); f_it++) {
-                DEBUG("Publishing diagnostics for %s", f_it->c_str());
-                SourceFileData *file = m_ctxt->getSourceFiles()->getFile(*f_it);
-                TaskPublishDiagnostics(m_ctxt, file, false).run(0, true);
-            }
+            setFlags(jrpc::TaskFlags::Complete);
         }
 
         case 5: {
-            // All done. Mark the collection valid and release the write lock
-            DEBUG("Unlock source collection");
-            m_ctxt->getSourceFiles()->getLock()->unlock_write_valid(true);
-            setFlags(jrpc::TaskFlags::Complete);
         }
     }
 

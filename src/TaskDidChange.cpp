@@ -43,7 +43,7 @@ TaskDidChange::~TaskDidChange() {
 }
 
 jrpc::ITask *TaskDidChange::run(jrpc::ITask *parent, bool initial) {
-    DEBUG_ENTER("run");
+    DEBUG_ENTER("run idx=%d", m_idx);
     runEnter(parent, initial);
 
     switch (m_idx) {
@@ -52,12 +52,6 @@ jrpc::ITask *TaskDidChange::run(jrpc::ITask *parent, bool initial) {
 
             jrpc::ITask *n = jrpc::TaskLockWrite(m_queue, m_ctxt->getSourceFiles()->getLock()).run(this, true);
 
-/*
-            if (!n || n->done()) {
-                setFlags(jrpc::TaskFlags::Yield);
-            }
-            break;
- */
             if (n && !n->done()) {
                 break;
             }
@@ -74,6 +68,7 @@ jrpc::ITask *TaskDidChange::run(jrpc::ITask *parent, bool initial) {
 
                 // Update the file data with 'live' data
                 jrpc::ITask *n = TaskUpdateSourceFileData(m_ctxt, m_file, true).run(this, true);
+
                 if (n && !n->done()) {
                     break;
                 }
@@ -85,13 +80,11 @@ jrpc::ITask *TaskDidChange::run(jrpc::ITask *parent, bool initial) {
             
             // If the live file doesn't have syntax errors, proceed to build
             // the file view of the symbol table
-            if (!m_file->hasSeverity(parser::MarkerSeverityE::Error, true)) {
-                DEBUG("UpdateFileSymtab");
-                jrpc::ITask *n = TaskUpdateFileSymtab(m_ctxt, m_uri).run(this, true);
+            DEBUG("UpdateFileSymtab");
+            jrpc::ITask *n = TaskUpdateFileSymtab(m_ctxt, m_uri, false).run(this, true);
                 
-                if (n && !n->done()) {
-                    break;
-                }
+            if (n && !n->done()) {
+                break;
             }
         }
 

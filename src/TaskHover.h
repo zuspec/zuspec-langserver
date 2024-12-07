@@ -45,7 +45,7 @@ public:
 
     TaskHover(TaskHover *o) : TaskBase(o),
         m_id(o->m_id), m_ctxt(o->m_ctxt), m_idx(o->m_idx), m_uri(o->m_uri),
-        m_lineno(o->m_lineno), m_linepos(o->m_linepos) { }
+        m_symtab(o->m_symtab), m_lineno(o->m_lineno), m_linepos(o->m_linepos) { }
 
     virtual ~TaskHover();
 
@@ -76,6 +76,7 @@ private:
     Context                         *m_ctxt;
     int32_t                         m_idx;
     std::string                     m_uri;
+    ast::ISymbolScope               *m_symtab;
     int32_t                         m_lineno;
     int32_t                         m_linepos;
     std::string                     m_result;

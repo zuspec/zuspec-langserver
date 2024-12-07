@@ -1,5 +1,5 @@
 /**
- * TestTaskBase.h
+ * TaskDidSave.h
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -19,42 +19,36 @@
  *     Author: 
  */
 #pragma once
-#include "jrpc/ITaskQueue.h"
+#include "jrpc/impl/TaskBase.h"
 #include "Context.h"
-#include "SourceFileCollection.h"
-#include "TaskSchedulerFixture.h"
-#include "TestBase.h"
-#include "TestClient.h"
 
 namespace zsp {
 namespace ls {
 
 
 
-class TestTaskBase : public TestBase {
+class TaskDidSave : public jrpc::TaskBase {
 public:
-    TestTaskBase();
+    TaskDidSave(
+        Context             *ctxt, 
+        const std::string   &uri);
 
-    virtual ~TestTaskBase();
+    TaskDidSave(TaskDidSave *o) : TaskBase(o),
+        m_ctxt(o->m_ctxt), m_uri(o->m_uri), m_idx(o->m_idx) { }
 
-    virtual void SetUp() override;
+    virtual ~TaskDidSave();
 
-    virtual void TearDown() override;
+    virtual TaskDidSave *clone() override { 
+        return new TaskDidSave(this);
+    }
 
-    void initWorkspace(
-        const std::vector<std::pair<std::string,std::string>>   &files);
+    jrpc::ITask *run(jrpc::ITask *parent, bool initial) override;
 
-    void saveFile(
-        const std::string   &name,
-        const std::string   &content);
-
-    bool runTasks(int32_t max=0);
-
-protected:
-    jrpc::ITaskQueueUP          m_queue;
-    TaskSchedulerFixture        m_scheduler;
-    ContextUP                   m_ctxt;
-    TestClient                  m_client;
+private:
+    static dmgr::IDebug             *m_dbg;
+    Context                         *m_ctxt;
+    std::string                     m_uri;
+    int32_t                         m_idx;
 
 };
 

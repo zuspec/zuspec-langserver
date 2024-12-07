@@ -29,7 +29,7 @@ SourceFileData::SourceFileData(
     const std::string       &uri,
     int64_t                 timestamp) :
         m_uri(uri), m_id(-1), m_timestamp(timestamp),
-        m_haveMarkers(false) {
+        m_isOpen(false), m_haveMarkers(false) {
     memset(m_has, 0, sizeof(m_has));
     memset(m_hasLink, 0, sizeof(m_hasLink));
     memset(m_hasLive, 0, sizeof(m_hasLive));
@@ -40,16 +40,24 @@ SourceFileData::~SourceFileData() {
 
 }
 
-void SourceFileData::clearMarkers(bool live) {
+void SourceFileData::clearLinkMarkers(bool live) {
     if (live) {
-        m_syntaxMarkersLive.clear();
         m_linkMarkersLive.clear();
         m_semanticMarkersLive.clear();
+        memset(m_hasLinkLive, 0, sizeof(m_hasLinkLive));
+    } else {
+        m_linkMarkers.clear();
+        m_semanticMarkers.clear();
+        memset(m_hasLink, 0, sizeof(m_hasLink));
+    }
+}
+
+void SourceFileData::clearSyntaxMarkers(bool live) {
+    if (live) {
+        m_syntaxMarkersLive.clear();
         memset(m_hasLive, 0, sizeof(m_hasLive));
     } else {
         m_syntaxMarkers.clear();
-        m_linkMarkers.clear();
-        m_semanticMarkers.clear();
         memset(m_has, 0, sizeof(m_has));
     }
 }

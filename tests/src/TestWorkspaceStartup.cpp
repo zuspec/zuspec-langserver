@@ -129,7 +129,7 @@ TEST_F(TestWorkspaceStartup, initial_link_error) {
     ASSERT_EQ(n_diagnostics, 1);
 
     // Link errors should not impact index availability
-    ASSERT_TRUE(m_ctxt->getSourceFiles()->getRoot());
+    ASSERT_TRUE(m_ctxt->getSourceFiles()->getRoot().getData());
 
 }
 
@@ -180,7 +180,7 @@ TEST_F(TestWorkspaceStartup, didOpen) {
     for (std::vector<SourceFileDataUP>::const_iterator
         it=m_ctxt->getSourceFiles()->getFiles().begin();
         it!=m_ctxt->getSourceFiles()->getFiles().end(); it++) {
-        ASSERT_TRUE((*it)->getStaticAst());
+        ASSERT_TRUE((*it)->getDiskAst());
     }
 
     // Confirm that some diagnostics were sent

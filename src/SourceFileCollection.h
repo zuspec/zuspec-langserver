@@ -24,7 +24,7 @@
 #include <vector>
 #include "dmgr/IDebugMgr.h"
 #include "jrpc/ITaskQueue.h"
-#include "jrpc/impl/LockRwValid.h"
+#include "jrpc/impl/LockRwData.h"
 #include "zsp/ast/IRootSymbolScope.h"
 #include "SourceFileData.h"
 
@@ -55,12 +55,8 @@ public:
         return m_file_l;
     }
 
-    ast::IRootSymbolScope *getRoot() {
-        return m_global.get();
-    }
-
-    void setRoot(ast::IRootSymbolScopeUP &root) {
-        m_global = std::move(root);
+    jrpc::LockRwData &getRoot() {
+        return m_global;
     }
 
     virtual bool tryLockFile(
@@ -72,7 +68,7 @@ public:
         const std::string           &uri,
         const std::string           &liveContent);
 
-    jrpc::LockRwValid *getLock() {
+    jrpc::LockRw *getLock() {
         return &m_lock;
     }
 
@@ -84,13 +80,15 @@ private:
     static dmgr::IDebug                     *m_dbg;
     dmgr::IDebugMgr                         *m_dmgr;
     jrpc::ITaskQueue                        *m_queue;
-    jrpc::LockRwValid                       m_lock;
+    jrpc::LockRw                            m_lock;
     std::map<std::string, jrpc::ITask *>    m_live_update_m;
     std::map<std::string,int32_t>           m_uri_id_m;
     std::map<int32_t,std::string>           m_id_uri_m;
 
     std::vector<SourceFileDataUP>           m_file_l;
-    ast::IRootSymbolScopeUP                 m_global;
+
+    // Holds ast::IRootSymbolScope
+    jrpc::LockRwData                        m_global;
 
     // Sequence id associated with updates to static AST
     int32_t                                 m_staticAstVersion;

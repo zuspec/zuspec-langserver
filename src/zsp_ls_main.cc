@@ -55,8 +55,8 @@ int main(int argc, char **argv) {
     dmgr::IDebugOutList *out_l = dmgr_f->mkDebugOutList();
 
 //    FILE *log_fp = fopen("/home/mballance/debug.log", "w");
-    FILE *log_fp = fopen("debug.log", "w");
-    out_l->addOutput(dmgr_f->mkDebugOutFile(log_fp, true));
+//    FILE *log_fp = fopen("debug.log", "w");
+    out_l->addOutput(dmgr_f->mkDebugOutPath("debug.log"));
 //    out_l->addOutput(dmgr_f->mkDebugOutFile(stdout, false));
 
     dmgr::IDebugMgr *dmgr = dmgr_getFactory()->getDebugMgr();
@@ -79,7 +79,8 @@ int main(int argc, char **argv) {
 
     getcwd(tmp, sizeof(tmp));
     DEBUG("Hello: %s", tmp);
-    fflush(log_fp);
+    dmgr->flush();
+//    fflush(log_fp);
 
     jrpc::IEventLoopUP loop(jrpc_f->mkEventLoop());
 
@@ -114,8 +115,9 @@ int main(int argc, char **argv) {
         server.get()
     ));
 
-    while (loop->process_one_event(-1)) {
-        ;
-    }
+    while (loop->process_one_event(-1) 
+        && !server->exited()) { ; }
+
+    dmgr->flush();
 
 }

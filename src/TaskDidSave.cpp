@@ -1,5 +1,5 @@
 /*
- * TaskDidClose.cpp
+ * TaskDidSave.cpp
  *
  * Copyright 2023 Matthew Ballance and Contributors
  *
@@ -20,62 +20,60 @@
  */
 #include "dmgr/impl/DebugMacros.h"
 #include "jrpc/impl/TaskLockWrite.h"
-#include "TaskDidClose.h"
+#include "TaskDidSave.h"
+#include "TaskRefreshRootSymtab.h"
+#include "TaskUpdateSourceFileData.h"
 
 
 namespace zsp {
 namespace ls {
 
 
-TaskDidClose::TaskDidClose(
+TaskDidSave::TaskDidSave(
     Context             *ctxt,
     const std::string   &uri) : TaskBase(ctxt->getQueue()),
     m_ctxt(ctxt), m_uri(uri), m_idx(0) {
-    DEBUG_INIT("zsp::ls::TaskDidClose", ctxt->getDebugMgr());
+    DEBUG_INIT("zsp::ls::TaskDidSave", ctxt->getDebugMgr());
 }
 
-TaskDidClose::~TaskDidClose() {
+TaskDidSave::~TaskDidSave() {
 
 }
 
-jrpc::ITask *TaskDidClose::run(jrpc::ITask *parent, bool initial) {
-    DEBUG_ENTER("run");
+jrpc::ITask *TaskDidSave::run(jrpc::ITask *parent, bool initial) {
+    DEBUG_ENTER("run %d", m_idx);
     runEnter(parent, initial);
 
     switch (m_idx) {
         case 0: {
-            m_idx = 1;
+            m_idx++;
 
             jrpc::ITask *n = jrpc::TaskLockWrite(m_queue, m_ctxt->getSourceFiles()->getLock()).run(0, true);
 
-            if (!n || !n->done()) {
-                setFlags(jrpc::TaskFlags::Yield);
+            if (n && !n->done()) {
+                DEBUG("Waiting for SourceCollection Write lock");
+                break;
             }
-            break;
         }
-
         case 1: {
-            m_idx = 2;
-            if (m_ctxt->getSourceFiles()->hasFile(m_uri)) {
-                SourceFileData *file = m_ctxt->getSourceFiles()->getFile(m_uri);
+            m_idx++;
+            DEBUG("Have SourceCollection Write lock");
 
-                // Clean up live-view data
-                file->closeLiveView();
+            jrpc::ITask *n = TaskUpdateSourceFileData(
+                m_ctxt, 
+                m_ctxt->getSourceFiles()->getFile(m_uri), 
+                false // update 'disk' view
+            ).run(this, true);
+
+            if (n && !n->done()) {
+                break;
             }
         }
-
         case 2: {
-            bool launch_refresh = m_ctxt->getSourceFiles()->hasFile(m_uri);
-
-            // Identify other open files.
-            // Invalidate their file symtabs (condition?) because our content has been committed
-            // 
+            // Invalidate root index
+            TaskRefreshRootSymtab(m_ctxt).run(this, true);
 
             m_ctxt->getSourceFiles()->getLock()->unlock_write();
-
-            if (launch_refresh) {
-
-            }
 
             setFlags(jrpc::TaskFlags::Complete);
         }
@@ -85,7 +83,7 @@ jrpc::ITask *TaskDidClose::run(jrpc::ITask *parent, bool initial) {
     return runLeave(parent, initial);
 }
 
-dmgr::IDebug *TaskDidClose::m_dbg = 0;
+dmgr::IDebug *TaskDidSave::m_dbg = 0;
 
 }
 }

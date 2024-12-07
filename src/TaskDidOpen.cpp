@@ -22,6 +22,7 @@
 #include "jrpc/impl/TaskLockWrite.h"
 #include "TaskDidOpen.h"
 #include "TaskPublishDiagnostics.h"
+#include "TaskRefreshRootSymtab.h"
 #include "TaskUpdateFileSymtab.h"
 #include "TaskUpdateSourceFileData.h"
 
@@ -77,6 +78,10 @@ jrpc::ITask *TaskDidOpen::run(jrpc::ITask *parent, bool initial) {
                 m_file = new SourceFileData(m_uri, -1);
                 SourceFileDataUP src_up(m_file);
                 m_ctxt->getSourceFiles()->addFile(src_up);
+
+                // Invalidate the central linked AST, since it is 
+                // now out-of-date
+                TaskRefreshRootSymtab(m_ctxt).run(this, true);
             }
 
             DEBUG("Set Live Content: %d", m_live_txt.size());
@@ -102,7 +107,7 @@ jrpc::ITask *TaskDidOpen::run(jrpc::ITask *parent, bool initial) {
             // If the live file doesn't have syntax errors, proceed to build
             // the file view of the symbol table
             if (!m_file->hasSeverity(parser::MarkerSeverityE::Error, true)) {
-                jrpc::ITask *n = TaskUpdateFileSymtab(m_ctxt, m_uri).run(this, true);
+                jrpc::ITask *n = TaskUpdateFileSymtab(m_ctxt, m_uri, false).run(this, true);
                 
                 if (n && !n->done()) {
                     break;

@@ -7,7 +7,8 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}/packages/vscode-pss-support"
+				"--extensionDevelopmentPath=${workspaceFolder}/packages/vscode-pss-support",
+				"--extensionDevelopmentPath=${workspaceFolder}/vscode/zuspec-langserver"
 			],
             "preLaunchTask": {
                 "type": "npm",

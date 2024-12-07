@@ -45,7 +45,8 @@ jrpc::ITask *TaskLinkAst::run(jrpc::ITask *parent, bool initial) {
 
     zsp::ast::IRootSymbolScopeUP root(linker->link(
         this,
-        m_files));
+        m_files,
+        false));
 
     setResult(jrpc::TaskResult(root.release(), true));
 
@@ -66,7 +67,7 @@ void TaskLinkAst::marker(const zsp::parser::IMarker *m) {
         zsp::parser::IMarkerUP mc(m->clone());
         file->addLinkMarker(mc, false);
     } else {
-        DEBUG("Fileid %s is no recognized", m->loc().fileid);
+        DEBUG("Fileid %s is not recognized", m->loc().fileid);
     }
 
     DEBUG_LEAVE("marker: %s", m->msg().c_str());
