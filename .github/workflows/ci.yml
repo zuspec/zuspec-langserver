@@ -34,13 +34,22 @@ jobs:
           quay.io/pypa/manylinux2014_x86_64
           /io/scripts/build_linux.sh
       - name: Build VSCode Extension
+        env:
+          IVPM_PYTHON: /opt/python/cp312-cp312/bin/python
+          BUILD_NUM: ${{ github.run_id }}
         run: |
           npm --version
           cd vscode/zuspec-langserver
           npm install
           npm run compile
           (cd ../../zuspec-langserver-* ; tar cf - bin lib) | tar xvf -
-          vsce package 0.0.1
+
+          version="0.0.3.${BUILD_NUM}"
+
+          sed -i -e "s/\"version\": \"[0-9]\.[0-9]\.[0-9]\"/\"version\": \"${version}\"/" package.json
+          echo "package.json"
+          cat package.json
+          vsce package ${version}
           vsce publish -p ${{ secrets.AZURE_API_TOKEN }} --no-git-tag-version patch
     #   - name: Publish to PyPi
     #     if: startsWith(github.ref, 'refs/heads/main')

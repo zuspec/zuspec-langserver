@@ -13,7 +13,9 @@ if test "x${IVPM_PYTHON}" = "x"; then
   export IVPM_PYTHON=python3
 fi
 
-version=0.0.1
+if test "x${version}" = "x"; then
+    version=0.0.1
+fi
 
 if test "x$BUILD_NUM" != "x"; then
    version="${version}.${BUILD_NUM}"
